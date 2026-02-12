@@ -2,10 +2,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
+
+
+def open_path_in_default_app(path: Path) -> None:
+    """Open a file with the system default application (e.g. PDF in viewer)."""
+    path_str = str(path)
+    if sys.platform == "win32":
+        os.startfile(path_str)
+    elif sys.platform == "darwin":
+        subprocess.run(["open", path_str], check=False)
+    else:
+        subprocess.run(["xdg-open", path_str], check=False)
 
 
 def ensure_dirs(base_dir: Path) -> dict[str, Path]:
