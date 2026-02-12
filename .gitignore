@@ -9,6 +9,8 @@
 # Ignore specific subdirectory for collaboration (may contain sensitive drafts)
 inbox/Collabs/
 
+# Ignore all files in the output folder (generated OFX files)
+output/*
 # Ignore all files in the inbox folder (temporary holding area for confidential customer data)
 inbox/*
 
