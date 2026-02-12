@@ -1,0 +1,381 @@
+{
+  "inference": {
+    "id": "ce57b202-d252-4a1b-966b-2b0152c2f462",
+    "job": {
+      "id": "ce57b202-d252-4a1b-966b-2b0152c2f462"
+    },
+    "model": {
+      "id": "721de552-09be-43ea-b1c5-7fb66a5c4e6f"
+    },
+    "file": {
+      "name": "Extrait de comptes Compte 19095 000208661 01 COMPTE COURANT PROFESSIONNEL EUR FP DEVELOPPEMENT au 2025-02-28.pdf",
+      "alias": null,
+      "page_count": 1,
+      "mime_type": "application/pdf"
+    },
+    "result": {
+      "fields": {
+        "bank_name": {
+          "locations": [],
+          "confidence": "High",
+          "value": "CIC Sud Ouest"
+        },
+        "account_type": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "checking"
+        },
+        "currency": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "EUR"
+        },
+        "detected_iban": {
+          "locations": [],
+          "confidence": "High",
+          "value": "FR76 1005 7190 9500 0208 6610 127"
+        },
+        "detected_aid": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "00020866101"
+        },
+        "account_id": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "00020866101"
+        },
+        "bank_id": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "CMCIFRPP"
+        },
+        "start_date": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "2025-02-10"
+        },
+        "end_date": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "2025-02-28"
+        },
+        "starting_balance": {
+          "locations": [],
+          "confidence": "High",
+          "value": 0.0
+        },
+        "ending_balance": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": 18500.0
+        },
+        "transactions": {
+          "items": [
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "VIR PETIT FREDERIC ZZ1HS8XHYA7ALLL19"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 1000.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 1000.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-02-20"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-02-20"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-02-20"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "ERREUR DESTINATAIRE SAS CONTOUR VU50511XNB63EH01"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 28000.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 28000.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-20"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-20"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-20"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "VIR INST RELEVE D'HONORAIRE VU50513FCXSGBC01"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -1296.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 1296.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 1296.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-20"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-20"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-20"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR INST RELEVE PROVISIONNEL VU50513FL69QV701"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -600.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 600.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 600.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-21"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-21"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-21"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR INST PETIT FREDERIC PETIT FREDERIC HOLDING"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 1896.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 1896.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-02-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-02-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-02-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR CAPITAL INITIAL SAS CONTOUR"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -28000.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 28000.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-27"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-27"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-02-27"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR PETIT FREDERIC PETIT FREDERIC COMPTE COURANT ASSOCIE ZZ1HVE4R6PNP19474"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 17500.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 17500.0
+                }
+              }
+            }
+          ],
+          "confidence": "Medium"
+        }
+      },
+      "raw_text": null,
+      "rag": null
+    },
+    "active_options": {
+      "raw_text": false,
+      "polygon": false,
+      "confidence": true,
+      "rag": false,
+      "multipage_context": false,
+      "text_context": false,
+      "data_schema": {
+        "replace": false
+      }
+    }
+  }
+}
