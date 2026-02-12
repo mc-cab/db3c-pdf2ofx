@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -18,8 +19,12 @@ def infer_pdf(api_key: str, model_id: str, pdf_path: Path) -> dict[str, Any]:
 
     try:
         client = ClientV2(api_key)
-        with pdf_path.open("rb") as handle:
-            response = client.enqueue_and_get_inference(file=handle, model_id=model_id)
+        input_source = client.source_from_path(str(pdf_path))
+
+        from mindee.input.inference_parameters import InferenceParameters
+        params = InferenceParameters(model_id=model_id)
+
+        response = client.enqueue_and_get_inference(input_source, params)
     except Exception as exc:
         raise StageError(
             stage=Stage.MINDEE,
@@ -27,6 +32,11 @@ def infer_pdf(api_key: str, model_id: str, pdf_path: Path) -> dict[str, Any]:
             hint=str(exc),
         ) from exc
 
+    if hasattr(response, "raw_http"):
+        raw = response.raw_http
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        return raw
     if hasattr(response, "raw_data"):
         return response.raw_data
     if hasattr(response, "raw_response"):

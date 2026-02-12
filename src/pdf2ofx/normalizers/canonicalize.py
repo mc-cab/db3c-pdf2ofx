@@ -53,6 +53,7 @@ def _parse_decimal(value: Any) -> Decimal | None:
 
 
 def _extract_prediction(raw: dict) -> dict:
+    # V1: document.inference.prediction
     if "document" in raw:
         document = raw.get("document") or {}
         inference = document.get("inference") or {}
@@ -61,9 +62,15 @@ def _extract_prediction(raw: dict) -> dict:
             return prediction
     if "inference" in raw:
         inference = raw.get("inference") or {}
+        # V1: inference.prediction
         prediction = inference.get("prediction")
         if prediction:
             return prediction
+        # V2: inference.result.fields
+        result = inference.get("result") or {}
+        fields = result.get("fields")
+        if fields:
+            return fields
     return raw
 
 
@@ -146,10 +153,102 @@ def _normalize_schema_a(prediction: dict, account_defaults: dict | None) -> Norm
     return NormalizationResult(statement=statement, warnings=warnings)
 
 
+def _normalize_schema_a_v2(prediction: dict, account_defaults: dict | None) -> NormalizationResult:
+    """Normalize V2 API response with snake_case field names."""
+    warnings: list[str] = []
+    account_defaults = account_defaults or {}
+
+    def field(name: str) -> Any:
+        return _extract_value(prediction.get(name))
+
+    transactions_field = prediction.get("transactions") or {}
+    transactions_raw = transactions_field.get("items") if isinstance(transactions_field, dict) else transactions_field
+    if transactions_raw is None:
+        transactions_raw = []
+    if not isinstance(transactions_raw, list):
+        raise NormalizationError(
+            "transactions.items field is not a list. Expected V2 custom model schema."
+        )
+
+    transactions: list[dict] = []
+    for item in transactions_raw:
+        item = item or {}
+        # V2 items may have a nested "fields" dict
+        fields = item.get("fields", item) if isinstance(item, dict) else item
+
+        op_date = _parse_date(_extract_value(fields.get("operation_date")))
+        post_date = _parse_date(_extract_value(fields.get("posting_date")))
+        val_date = _parse_date(_extract_value(fields.get("value_date")))
+        posted_at = op_date or post_date or val_date
+        if op_date:
+            posted_at_source = "operation"
+        elif post_date:
+            posted_at_source = "posting"
+        elif val_date:
+            posted_at_source = "value"
+        else:
+            posted_at_source = None
+
+        amount_signed = _parse_decimal(_extract_value(fields.get("amount")))
+        debit = _parse_decimal(_extract_value(fields.get("debit_amount")))
+        credit = _parse_decimal(_extract_value(fields.get("credit_amount")))
+
+        amount = amount_signed
+        if amount is None:
+            if debit not in (None, Decimal("0")):
+                amount = -abs(debit)
+            elif credit not in (None, Decimal("0")):
+                amount = abs(credit)
+
+        description = _extract_value(fields.get("description"))
+        memo = None
+        notes = _extract_value(fields.get("row_confidence_notes"))
+        if notes:
+            memo = f"{notes}"
+        name = description or "UNKNOWN"
+
+        transactions.append(
+            {
+                "fitid": "",
+                "posted_at": posted_at,
+                "posted_at_source": posted_at_source,
+                "amount": amount,
+                "debit": debit,
+                "credit": credit,
+                "name": name,
+                "memo": memo,
+            }
+        )
+
+    statement = {
+        "schema_version": "1.0",
+        "source": {"origin": "mindee", "document_id": prediction.get("document_id")},
+        "account": {
+            "account_id": account_defaults.get("account_id"),
+            "bank_id": field("bank_name"),
+            "account_type": None,
+            "currency": None,
+        },
+        "period": {
+            "start_date": _parse_date(field("start_date")),
+            "end_date": _parse_date(field("end_date")),
+        },
+        "transactions": transactions,
+    }
+
+    return NormalizationResult(statement=statement, warnings=warnings)
+
+
 def canonicalize_mindee(raw: dict, account_defaults: dict | None = None) -> NormalizationResult:
     prediction = _extract_prediction(raw)
+
+    # V1 schema A: Title Case field names
     if any(key in prediction for key in ("Transactions", "Bank Name", "Start Date")):
         return _normalize_schema_a(prediction, account_defaults)
+
+    # V2 schema: snake_case field names
+    if any(key in prediction for key in ("transactions", "bank_name", "start_date")):
+        return _normalize_schema_a_v2(prediction, account_defaults)
 
     if any(key in prediction for key in ("account_number", "list_of_transactions")):
         raise NormalizationError(
