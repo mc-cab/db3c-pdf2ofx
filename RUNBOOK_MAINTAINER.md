@@ -169,15 +169,48 @@ With `--dev-non-interactive`, the sanity stage auto-accepts without prompting. Q
 
 ---
 
+## Mindee Data Schema Reference
+
+The full production schema is documented in [`docs/MINDEE_DATA_SCHEMA_REFERENCE.md`](docs/MINDEE_DATA_SCHEMA_REFERENCE.md). That file is the **canonical backup** of the Mindee custom model configuration.
+
+### When to use it
+
+- If the Mindee model or account is lost, deleted, or needs to be recreated from scratch
+- When onboarding a new team member who needs to understand what Mindee extracts
+- When adding or modifying fields in the Mindee UI — check the reference first to understand the current state
+
+### How to recreate the schema
+
+1. Open [`docs/MINDEE_DATA_SCHEMA_REFERENCE.md`](docs/MINDEE_DATA_SCHEMA_REFERENCE.md)
+2. In the Mindee UI, create a new Custom Extraction model
+3. For each field table in the document, create the field with the exact **Field Name** and **Field Type** shown
+4. Copy **Description** and **Guideline** text into the Mindee UI
+5. For the `transactions` field: set type to Nested Object, enable "Multiple items can be extracted", then add each subfield
+6. Enable the **Confidence** option in model settings
+7. Train the model with sample bank statement PDFs
+8. Update `MINDEE_MODEL_ID` in `.env` with the new model ID
+
+### Keeping it current
+
+When you add or change fields in the Mindee UI, update `docs/MINDEE_DATA_SCHEMA_REFERENCE.md` to match. The reference document must always reflect the production model.
+
+---
+
 ## Mindee Schema Constraints
 
 The normalizer (`canonicalize.py`) supports **custom schema A only**.
 
 ### Expected prediction fields
 
-**Statement-level:** `Transactions`, `Bank Name`, `Start Date`, `End Date`
+**V1 (Title Case) statement-level:** `Transactions`, `Bank Name`, `Start Date`, `End Date`
 
-**Transaction-level:** `Operation Date`, `Posting Date`, `Value Date`, `Amount Signed`, `Debit Amount`, `Credit Amount`, `Description`, `Row Confidence Notes`
+**V1 transaction-level:** `Operation Date`, `Posting Date`, `Value Date`, `Amount Signed`, `Debit Amount`, `Credit Amount`, `Description`, `Row Confidence Notes`
+
+**V2 (snake_case) statement-level:** `bank_name`, `bank_id`, `account_id`, `account_type`, `currency`, `start_date`, `end_date`, `starting_balance`, `ending_balance`, `detected_iban`, `detected_aid`, `transactions`
+
+**V2 transaction-level:** `operation_date`, `posting_date`, `value_date`, `amount`, `debit_amount`, `credit_amount`, `description`
+
+For the full field-by-field reference, see [`docs/MINDEE_DATA_SCHEMA_REFERENCE.md`](docs/MINDEE_DATA_SCHEMA_REFERENCE.md).
 
 ### Detection logic
 
