@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from helpers.errors import Stage, StageError
+from pdf2ofx.helpers.errors import Stage, StageError
 
 
 def infer_pdf(api_key: str, model_id: str, pdf_path: Path) -> dict[str, Any]:

@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from helpers.reporting import Issue, Severity
+from pdf2ofx.helpers.reporting import Issue, Severity
 
 @dataclass
 class PdfResult:

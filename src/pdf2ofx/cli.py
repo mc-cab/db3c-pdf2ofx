@@ -12,10 +12,10 @@ from InquirerPy import inquirer
 from rich.console import Console
 from rich.panel import Panel
 
-from converters.ofx_emitter import emit_ofx
-from handlers.mindee_handler import infer_pdf
-from helpers.errors import Stage, StageError
-from helpers.fs import (
+from pdf2ofx.converters.ofx_emitter import emit_ofx
+from pdf2ofx.handlers.mindee_handler import infer_pdf
+from pdf2ofx.helpers.errors import Stage, StageError
+from pdf2ofx.helpers.fs import (
     ensure_dirs,
     list_pdfs,
     load_local_settings,
@@ -25,12 +25,12 @@ from helpers.fs import (
     timestamp_slug,
     write_json,
 )
-from helpers.reporting import Issue, Severity
-from helpers.timing import Timer
-from helpers.ui import PdfResult, render_banner, render_summary
-from normalizers.canonicalize import NormalizationError, canonicalize_mindee
-from normalizers.fitid import assign_fitids
-from validators.contract_validator import ValidationError, validate_statement
+from pdf2ofx.helpers.reporting import Issue, Severity
+from pdf2ofx.helpers.timing import Timer
+from pdf2ofx.helpers.ui import PdfResult, render_banner, render_summary
+from pdf2ofx.normalizers.canonicalize import NormalizationError, canonicalize_mindee
+from pdf2ofx.normalizers.fitid import assign_fitids
+from pdf2ofx.validators.contract_validator import ValidationError, validate_statement
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -244,7 +244,7 @@ def main(
         hidden=True,
     ),
     base_dir: Path = typer.Option(
-        Path(__file__).resolve().parent,
+        Path.cwd(),
         "--base-dir",
         help="(dev) Override base directory.",
         hidden=True,

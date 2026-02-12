@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from helpers.reporting import Issue, Severity
+from pdf2ofx.helpers.reporting import Issue, Severity
 
 class ValidationError(Exception):
     pass

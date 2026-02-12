@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from normalizers.fitid import assign_fitids, compute_fitid, normalize_label
+from pdf2ofx.normalizers.fitid import assign_fitids, compute_fitid, normalize_label
 
 
 def test_fitid_deterministic():
