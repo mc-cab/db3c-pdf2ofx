@@ -12,6 +12,7 @@ from typing import Iterable
 import typer
 from dotenv import load_dotenv
 from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
 from rich.console import Console
 from rich.panel import Panel
 
@@ -339,6 +340,7 @@ def _run_sanity_stage(
         choices: list[tuple[str, str]] = [
             ("Accept", "accept"),
             ("Edit balances", "edit"),
+            ("Edit transactions", "edit_tx"),
             ("Skip reconciliation", "skip"),
         ]
         if source_path is not None and source_path.exists():
@@ -390,6 +392,46 @@ def _run_sanity_stage(
                 validation_issues=validation_issues,
                 starting_balance=start_bal,
                 ending_balance=end_bal,
+            )
+            render_sanity_panel(console, result)
+            continue
+
+        if action == "edit_tx":
+            transactions = statement.get("transactions", [])
+            if not transactions:
+                continue
+            max_desc = 50
+            checkbox_choices = []
+            for i, tx in enumerate(transactions):
+                date_str = (tx.get("posted_at") or "?")[:10]
+                amt = tx.get("amount")
+                amt_str = f"{str(amt):>12}" if amt is not None else " " * 12
+                desc = (tx.get("name") or tx.get("memo") or "-").strip()
+                if len(desc) > max_desc:
+                    desc = desc[: max_desc - 1] + "…"
+                label = f"{date_str}  {amt_str}  {desc}"
+                checkbox_choices.append(Choice(i, name=label))
+            to_remove = inquirer.checkbox(
+                message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
+                choices=checkbox_choices,
+            ).execute()
+            if to_remove is None:
+                continue
+            if len(to_remove) == 0:
+                continue
+            if len(to_remove) >= len(transactions):
+                console.print("[yellow]At least one transaction must remain.[/yellow]")
+                continue
+            to_remove_set = set(to_remove)
+            statement["transactions"] = [
+                t for i, t in enumerate(transactions) if i not in to_remove_set
+            ]
+            result = compute_sanity(
+                statement=statement,
+                pdf_name=pdf_name,
+                extracted_count=extracted_count,
+                raw_response=raw_response,
+                validation_issues=validation_issues,
             )
             render_sanity_panel(console, result)
             continue
