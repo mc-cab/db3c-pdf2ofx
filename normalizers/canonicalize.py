@@ -1,0 +1,161 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any
+
+@dataclass
+class NormalizationResult:
+    statement: dict
+    warnings: list[str]
+
+
+class NormalizationError(Exception):
+    pass
+
+
+def _extract_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        if "value" in value:
+            return value["value"]
+        if "values" in value:
+            return value["values"]
+    return value
+
+
+def _parse_date(value: Any) -> str | None:
+    if not value:
+        return None
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, str):
+        try:
+            return date.fromisoformat(value).isoformat()
+        except ValueError:
+            for fmt in ("%d/%m/%Y", "%Y/%m/%d"):
+                try:
+                    return datetime.strptime(value, fmt).date().isoformat()
+                except ValueError:
+                    continue
+    return None
+
+
+def _parse_decimal(value: Any) -> Decimal | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value))
+    except Exception:
+        return None
+
+
+def _extract_prediction(raw: dict) -> dict:
+    if "document" in raw:
+        document = raw.get("document") or {}
+        inference = document.get("inference") or {}
+        prediction = inference.get("prediction")
+        if prediction:
+            return prediction
+    if "inference" in raw:
+        inference = raw.get("inference") or {}
+        prediction = inference.get("prediction")
+        if prediction:
+            return prediction
+    return raw
+
+
+def _normalize_schema_a(prediction: dict, account_defaults: dict | None) -> NormalizationResult:
+    warnings: list[str] = []
+    account_defaults = account_defaults or {}
+
+    def field(name: str) -> Any:
+        return _extract_value(prediction.get(name))
+
+    transactions_raw = field("Transactions") or []
+    if not isinstance(transactions_raw, list):
+        raise NormalizationError(
+            "Transactions field is not a list. Expected custom model schema A."
+        )
+
+    transactions: list[dict] = []
+    for item in transactions_raw:
+        item = item or {}
+        op_date = _parse_date(_extract_value(item.get("Operation Date")))
+        post_date = _parse_date(_extract_value(item.get("Posting Date")))
+        val_date = _parse_date(_extract_value(item.get("Value Date")))
+        posted_at = op_date or post_date or val_date
+        if op_date:
+            posted_at_source = "operation"
+        elif post_date:
+            posted_at_source = "posting"
+        elif val_date:
+            posted_at_source = "value"
+        else:
+            posted_at_source = None
+
+        amount_signed = _parse_decimal(_extract_value(item.get("Amount Signed")))
+        debit = _parse_decimal(_extract_value(item.get("Debit Amount")))
+        credit = _parse_decimal(_extract_value(item.get("Credit Amount")))
+
+        amount = amount_signed
+        if amount is None:
+            if debit not in (None, Decimal("0")):
+                amount = -abs(debit)
+            elif credit not in (None, Decimal("0")):
+                amount = abs(credit)
+
+        description = _extract_value(item.get("Description"))
+        memo = None
+        notes = _extract_value(item.get("Row Confidence Notes"))
+        if notes:
+            memo = f"{notes}"
+        name = description or "UNKNOWN"
+
+        transactions.append(
+            {
+                "fitid": "",
+                "posted_at": posted_at,
+                "posted_at_source": posted_at_source,
+                "amount": amount,
+                "debit": debit,
+                "credit": credit,
+                "name": name,
+                "memo": memo,
+            }
+        )
+
+    statement = {
+        "schema_version": "1.0",
+        "source": {"origin": "mindee", "document_id": prediction.get("document_id")},
+        "account": {
+            "account_id": account_defaults.get("account_id"),
+            "bank_id": field("Bank Name"),
+            "account_type": None,
+            "currency": None,
+        },
+        "period": {
+            "start_date": _parse_date(field("Start Date")),
+            "end_date": _parse_date(field("End Date")),
+        },
+        "transactions": transactions,
+    }
+
+    return NormalizationResult(statement=statement, warnings=warnings)
+
+
+def canonicalize_mindee(raw: dict, account_defaults: dict | None = None) -> NormalizationResult:
+    prediction = _extract_prediction(raw)
+    if any(key in prediction for key in ("Transactions", "Bank Name", "Start Date")):
+        return _normalize_schema_a(prediction, account_defaults)
+
+    if any(key in prediction for key in ("account_number", "list_of_transactions")):
+        raise NormalizationError(
+            "Mindee default bank statement schema is not implemented yet."
+        )
+
+    raise NormalizationError(
+        "Unrecognized Mindee schema. Expected custom schema A fields."
+    )

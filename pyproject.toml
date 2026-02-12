@@ -1,0 +1,21 @@
+[project]
+name = "pdf2ofx"
+version = "0.1.1"
+description = "Mindee PDF bank statement to OFX converter"
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+  "typer",
+  "rich",
+  "InquirerPy",
+  "ofxtools",
+  "mindee",
+  "python-dotenv",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

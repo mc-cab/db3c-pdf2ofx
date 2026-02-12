@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "source": {"origin": "mindee", "document_id": "doc_123"},
+  "account": {
+    "account_id": "ACC-123",
+    "bank_id": "TESTBANK",
+    "account_type": "CHECKING",
+    "currency": "EUR"
+  },
+  "period": {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+  "transactions": [
+    {
+      "fitid": "FIT-1",
+      "posted_at": "2024-01-05",
+      "amount": "-3.50",
+      "debit": "3.50",
+      "credit": null,
+      "name": "Coffee Shop",
+      "memo": "Receipt"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "document": {
+    "id": "doc_123",
+    "inference": {
+      "prediction": {
+        "Bank Name": "Test Bank",
+        "Start Date": "2024-01-01",
+        "End Date": "2024-01-31",
+        "Transactions": [
+          {
+            "Operation Date": "2024-01-05",
+            "Posting Date": "2024-01-06",
+            "Value Date": "2024-01-07",
+            "Description": "Coffee Shop",
+            "Amount Signed": "-3.50",
+            "Debit Amount": "3.50",
+            "Credit Amount": null,
+            "Row Confidence Notes": "low confidence"
+          },
+          {
+            "Posting Date": "2024-01-10",
+            "Value Date": "2024-01-11",
+            "Description": "Salary",
+            "Debit Amount": null,
+            "Credit Amount": "1000.00"
+          }
+        ]
+      }
+    }
+  }
+}
