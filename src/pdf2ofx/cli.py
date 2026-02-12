@@ -107,12 +107,19 @@ _IGNORE_PAIRS = (
 )
 
 
+def _sanity_needs_visual_check(r: SanityResult) -> bool:
+    """True if this sanity result has something that warrants opening the PDF."""
+    if r.reconciliation_status in ("ERROR", "WARNING"):
+        return True
+    if r.deductions or r.warnings:
+        return True
+    return False
+
+
 def _should_suggest_open_file(
     issues: list[Issue], sanity_results: list[SanityResult]
 ) -> bool:
-    if any(
-        r.reconciliation_status in ("ERROR", "WARNING") for r in sanity_results
-    ):
+    if any(_sanity_needs_visual_check(r) for r in sanity_results):
         return True
     reasons = {i.reason for i in issues}
     if reasons in _IGNORE_PAIRS:
@@ -129,7 +136,7 @@ def _get_sources_to_open(
     stem_to_source = {s.stem: s for s in sources}
     to_open: set[Path] = set()
     for i, r in enumerate(sanity_results):
-        if r.reconciliation_status in ("ERROR", "WARNING"):
+        if _sanity_needs_visual_check(r):
             path = stem_to_source.get(statements[i].name)
             if path is not None:
                 to_open.add(path)
@@ -309,6 +316,7 @@ def _run_sanity_stage(
     raw_response: dict | None,
     validation_issues: list,
     dev_non_interactive: bool,
+    source_path: Path | None = None,
 ) -> SanityResult:
     """Run the SANITY stage: compute, display, confirm.
 
@@ -328,15 +336,22 @@ def _run_sanity_stage(
         return result
 
     while True:
+        choices: list[tuple[str, str]] = [
+            ("Accept", "accept"),
+            ("Edit balances", "edit"),
+            ("Skip reconciliation", "skip"),
+        ]
+        if source_path is not None and source_path.exists():
+            choices.append(("Open source PDF", "open"))
         action = _prompt_select(
             "Sanity check:",
-            choices=[
-                ("Accept", "accept"),
-                ("Edit balances", "edit"),
-                ("Skip reconciliation", "skip"),
-            ],
+            choices=choices,
             default="accept",
         )
+
+        if action == "open":
+            open_path_in_default_app(source_path)
+            continue
 
         if action == "skip":
             result = compute_sanity(
@@ -522,6 +537,7 @@ def main(
                             raw_response=raw_response,
                             validation_issues=validation.issues,
                             dev_non_interactive=dev_non_interactive,
+                            source_path=source if not dev_mode else None,
                         )
                         sanity_results.append(sanity_result)
                     except UserAbort:
@@ -847,36 +863,6 @@ def main(
                 fitid_lines=fitid_lines,
                 fitid_to_json=fitid_to_json,
             )
-            if (
-                not dev_mode
-                and not dev_non_interactive
-                and _should_suggest_open_file(issues, sanity_results)
-            ):
-                paths_to_open = _get_sources_to_open(
-                    issues, sanity_results, statements, sources
-                )
-                if paths_to_open:
-                    run_date = date.today().isoformat()
-                    resolved: list[Path] = []
-                    for path in paths_to_open:
-                        if path.exists():
-                            resolved.append(path)
-                        else:
-                            for sub in ("processed", "failed"):
-                                candidate = base_dir / sub / run_date / path.name
-                                if candidate.exists():
-                                    resolved.append(candidate)
-                                    break
-                    if resolved:
-                        n = len(resolved)
-                        msg = (
-                            f"Open {n} source PDF(s) for inspection?"
-                            if n > 1
-                            else "Open source PDF for inspection?"
-                        )
-                        if _prompt_confirm(msg, False):
-                            for path in resolved:
-                                open_path_in_default_app(path)
             if not output_files:
                 console.print(
                     Panel.fit(
