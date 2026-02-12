@@ -134,11 +134,17 @@ def _normalize_schema_a(prediction: dict, account_defaults: dict | None) -> Norm
             }
         )
 
+    # Account ID: Mindee wins if present, else fall back to defaults
+    mindee_account_id = (
+        field("Account Number") or field("Account ID") or field("Account Id")
+    )
+    account_id = mindee_account_id or account_defaults.get("account_id")
+
     statement = {
         "schema_version": "1.0",
         "source": {"origin": "mindee", "document_id": prediction.get("document_id")},
         "account": {
-            "account_id": account_defaults.get("account_id"),
+            "account_id": account_id,
             "bank_id": field("Bank Name"),
             "account_type": None,
             "currency": None,
@@ -220,11 +226,17 @@ def _normalize_schema_a_v2(prediction: dict, account_defaults: dict | None) -> N
             }
         )
 
+    # Account ID: Mindee wins if present, else fall back to defaults
+    mindee_account_id = (
+        field("account_number") or field("account_id")
+    )
+    account_id = mindee_account_id or account_defaults.get("account_id")
+
     statement = {
         "schema_version": "1.0",
         "source": {"origin": "mindee", "document_id": prediction.get("document_id")},
         "account": {
-            "account_id": account_defaults.get("account_id"),
+            "account_id": account_id,
             "bank_id": field("bank_name"),
             "account_type": None,
             "currency": None,

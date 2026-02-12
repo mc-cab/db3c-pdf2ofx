@@ -104,6 +104,71 @@ fitid = sha256(token)[:20]
 
 ---
 
+## Sanity & Reconciliation Layer
+
+The pipeline includes a **SANITY** stage between VALIDATE and EMIT:
+
+```
+PREFLIGHT → MINDEE → NORMALIZE → VALIDATE → SANITY → EMIT → WRITE
+```
+
+### What SANITY does
+
+For each PDF (after validation passes):
+
+1. **Computes statement-level statistics** — extracted/kept/dropped transaction counts, total credits/debits, net movement
+2. **Attempts balance reconciliation** — if starting & ending balances are available (from raw Mindee response or operator entry), computes `reconciled_end = starting_balance + net_movement` and delta against expected ending balance
+3. **Computes quality score** — base 100, with deductions per spec §6
+4. **Displays structured Rich panel** — summary per PDF with colour-coded status
+5. **Prompts operator** — Accept / Edit balances / Skip reconciliation
+
+### Reconciliation thresholds
+
+| Delta (abs) | Status |
+|-------------|--------|
+| ≤ 0.01 | OK |
+| 0.01 – 1.00 | WARNING |
+| > 1.00 | ERROR (requires force-accept) |
+
+### Quality score deductions
+
+| Condition | Points |
+|-----------|--------|
+| Reconciliation ERROR | -60 |
+| Balances missing | -25 |
+| >10% transactions dropped | -15 |
+| Per validation WARNING category | -10 (cap 30) |
+| Low Mindee confidence (if available) | -15 |
+
+Classification: 80–100 = GOOD, 50–79 = DEGRADED, <50 = POOR.
+
+### Non-interactive mode
+
+With `--dev-non-interactive`, the sanity stage auto-accepts without prompting. Quality score is still computed and displayed in the batch summary.
+
+### Balance data sources
+
+1. **Raw Mindee response** — the SANITY layer scans the prediction dict for keys like `Starting Balance`, `starting_balance`, `opening_balance` etc. This works if the Mindee custom model includes balance fields.
+2. **Operator manual entry** — prompted during the "Edit balances" flow.
+3. **Not available** — if neither source provides balances, reconciliation is SKIPPED and quality is downgraded by 25 points.
+
+### Key invariants
+
+- The SANITY stage **never mutates** the validated statement. It is read-only.
+- The SANITY stage **never blocks** the pipeline — it can always be skipped.
+- Exceptions in the SANITY stage are caught and converted to `StageError(stage=Stage.SANITY)`, so one PDF's sanity failure does not crash the batch.
+
+### Code layout
+
+| File | Responsibility |
+|------|----------------|
+| `src/pdf2ofx/sanity/checks.py` | Pure computation: reconciliation math, quality scoring, balance extraction |
+| `src/pdf2ofx/sanity/panel.py` | Rich panel rendering (display only) |
+| `src/pdf2ofx/cli.py` → `_run_sanity_stage()` | Operator confirmation flow, wiring |
+| `tests/test_sanity.py` | 24 unit tests covering reconciliation, quality, extraction, edge cases |
+
+---
+
 ## Mindee Schema Constraints
 
 The normalizer (`canonicalize.py`) supports **custom schema A only**.
@@ -173,6 +238,9 @@ The normalizer (`canonicalize.py`) supports **custom schema A only**.
 | All transactions dropped by validator | Missing dates, amounts, or FITIDs in extraction | Inspect canonical JSON, check Mindee model training data |
 | OFX import shows duplicate transactions | FITID collision (same date + amount + label) | Expected for true duplicates; `seq` counter handles most cases |
 | `pip install -e .` fails | Missing `__init__.py` or broken import paths | Run packaging validation checklist above |
+| `[SANITY] Sanity check failed: ...` | Unexpected data in raw Mindee response | Inspect `tmp/<pdf>.json`; check for malformed prediction structure |
+| Quality score DEGRADED with "balances missing" | Mindee model does not extract balances | Enter balances manually via "Edit balances", or skip to proceed |
+| Reconciliation ERROR with large delta | OCR misread balance or amount values | Verify amounts in panel, edit balances, or force-accept |
 
 ---
 

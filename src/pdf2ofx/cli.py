@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Iterable
 
@@ -29,6 +30,8 @@ from pdf2ofx.helpers.reporting import Issue, Severity
 from pdf2ofx.helpers.timing import Timer
 from pdf2ofx.helpers.ui import PdfResult, render_banner, render_summary
 from pdf2ofx.normalizers.canonicalize import NormalizationError, canonicalize_mindee
+from pdf2ofx.sanity.checks import SanityResult, compute_sanity
+from pdf2ofx.sanity.panel import render_sanity_panel
 from pdf2ofx.normalizers.fitid import assign_fitids
 from pdf2ofx.validators.contract_validator import ValidationError, validate_statement
 
@@ -206,11 +209,11 @@ def _process_raw_pdf(
     model_id: str,
     tmp_dir: Path,
     account_defaults: dict,
-) -> tuple[dict, list[str]]:
+) -> tuple[dict, list[str], dict]:
     raw = infer_pdf(api_key, model_id, pdf_path)
     write_json(tmp_dir / f"{pdf_path.stem}.json", raw)
     normalization = canonicalize_mindee(raw, account_defaults=account_defaults)
-    return normalization.statement, normalization.warnings
+    return normalization.statement, normalization.warnings, raw
 
 
 def _process_dev_canonical(
@@ -221,6 +224,94 @@ def _process_dev_canonical(
         statement = json.load(handle)
     write_json(tmp_dir / f"{canonical_path.stem}.json", {"dev_mode": True})
     return statement
+
+
+def _run_sanity_stage(
+    console: Console,
+    statement: dict,
+    pdf_name: str,
+    extracted_count: int,
+    raw_response: dict | None,
+    validation_issues: list,
+    dev_non_interactive: bool,
+) -> SanityResult:
+    """Run the SANITY stage: compute, display, confirm.
+
+    Returns the final SanityResult after operator confirmation.
+    Does **not** mutate *statement*.
+    """
+    result = compute_sanity(
+        statement=statement,
+        pdf_name=pdf_name,
+        extracted_count=extracted_count,
+        raw_response=raw_response,
+        validation_issues=validation_issues,
+    )
+    render_sanity_panel(console, result)
+
+    if dev_non_interactive:
+        return result
+
+    while True:
+        action = _prompt_select(
+            "Sanity check:",
+            choices=[
+                ("Accept", "accept"),
+                ("Edit balances", "edit"),
+                ("Skip reconciliation", "skip"),
+            ],
+            default="accept",
+        )
+
+        if action == "skip":
+            result = compute_sanity(
+                statement=statement,
+                pdf_name=pdf_name,
+                extracted_count=extracted_count,
+                raw_response=None,
+                validation_issues=validation_issues,
+            )
+            result.skipped = True
+            render_sanity_panel(console, result)
+            return result
+
+        if action == "edit":
+            start_str = _prompt_text("Starting balance (or Enter to skip):")
+            end_str = _prompt_text("Ending balance (or Enter to skip):")
+
+            start_bal: Decimal | None = None
+            end_bal: Decimal | None = None
+            if start_str.strip():
+                try:
+                    start_bal = Decimal(start_str.strip().replace(",", ""))
+                except (InvalidOperation, ValueError):
+                    console.print("[yellow]Invalid starting balance — ignored[/yellow]")
+            if end_str.strip():
+                try:
+                    end_bal = Decimal(end_str.strip().replace(",", ""))
+                except (InvalidOperation, ValueError):
+                    console.print("[yellow]Invalid ending balance — ignored[/yellow]")
+
+            result = compute_sanity(
+                statement=statement,
+                pdf_name=pdf_name,
+                extracted_count=extracted_count,
+                raw_response=raw_response,
+                validation_issues=validation_issues,
+                starting_balance=start_bal,
+                ending_balance=end_bal,
+            )
+            render_sanity_panel(console, result)
+            continue
+
+        # action == "accept"
+        if result.reconciliation_status == "ERROR":
+            force = _prompt_confirm(
+                "Reconciliation ERROR detected — force accept?", False,
+            )
+            if not force:
+                continue
+        return result
 
 
 @app.command()
@@ -275,6 +366,7 @@ def main(
             issues: list[Issue] = []
             pdf_notes: dict[str, list[str]] = {}
             statements: list[ProcessItem] = []
+            sanity_results: list[SanityResult] = []
 
             settings_path = base_dir / "local_settings.json"
             settings = load_local_settings(settings_path)
@@ -294,8 +386,9 @@ def main(
                     if dev_mode:
                         statement = _process_dev_canonical(source, tmp_dir)
                         per_warnings: list[str] = []
+                        raw_response: dict | None = None
                     else:
-                        statement, per_warnings = _process_raw_pdf(
+                        statement, per_warnings, raw_response = _process_raw_pdf(
                             source, api_key, model_id, tmp_dir, settings
                         )
 
@@ -311,6 +404,7 @@ def main(
                         pdf_notes.setdefault(source.name, []).append(
                             f"posted_at fallback used for {posted_at_issue.count} txs"
                         )
+                    extracted_count = len(statement.get("transactions", []))
                     validation = validate_statement(statement)
                     statement = validation.statement
                     issues.extend(validation.issues)
@@ -332,6 +426,27 @@ def main(
                             )
                         )
                         continue
+
+                    # ── SANITY stage ──────────────────────────
+                    try:
+                        sanity_result = _run_sanity_stage(
+                            console=console,
+                            statement=statement,
+                            pdf_name=source.name,
+                            extracted_count=extracted_count,
+                            raw_response=raw_response,
+                            validation_issues=validation.issues,
+                            dev_non_interactive=dev_non_interactive,
+                        )
+                        sanity_results.append(sanity_result)
+                    except UserAbort:
+                        raise
+                    except Exception as exc:
+                        raise StageError(
+                            stage=Stage.SANITY,
+                            message=f"Sanity check failed: {exc}",
+                            hint="Check raw Mindee response in tmp/",
+                        ) from exc
 
                     if dev_simulate_failure and index == 0:
                         raise StageError(
@@ -578,6 +693,7 @@ def main(
                 total_transactions=sum(
                     len(item.statement.get("transactions", [])) for item in statements
                 ),
+                sanity_results=sanity_results,
             )
             if not output_files:
                 console.print(

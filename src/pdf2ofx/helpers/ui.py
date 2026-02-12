@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from pdf2ofx.helpers.reporting import Issue, Severity
+
+if TYPE_CHECKING:
+    from pdf2ofx.sanity.checks import SanityResult
 
 @dataclass
 class PdfResult:
@@ -31,6 +34,7 @@ def render_summary(
     elapsed: float,
     pdf_notes: dict[str, list[str]],
     total_transactions: int,
+    sanity_results: list[SanityResult] | None = None,
 ) -> None:
     table = Table(title="Batch Summary", show_lines=True)
     table.add_column("PDF")
@@ -69,14 +73,28 @@ def render_summary(
     )
     ok_count = max(total_transactions - warning_count - error_count, 0)
 
-    quality = "GOOD"
-    if total_transactions:
-        error_ratio = error_count / total_transactions
-        warning_ratio = warning_count / total_transactions
-        if error_ratio >= 0.2:
-            quality = "POOR"
-        elif warning_ratio >= 0.1:
-            quality = "DEGRADED"
+    # Quality indicator — prefer sanity score, fall back to heuristic
+    if sanity_results:
+        worst = min(sanity_results, key=lambda r: r.quality_score)
+        quality = worst.quality_label
+        quality_detail = f"{quality} ({worst.quality_score}/100)"
+        any_skipped = any(r.skipped for r in sanity_results)
+        if any_skipped:
+            quality_detail += " — SANITY skipped for some PDFs → downgraded"
+        quality_style = {"GOOD": "green", "DEGRADED": "yellow", "POOR": "red"}.get(
+            quality, "dim"
+        )
+    else:
+        quality = "GOOD"
+        if total_transactions:
+            error_ratio = error_count / total_transactions
+            warning_ratio = warning_count / total_transactions
+            if error_ratio >= 0.2:
+                quality = "POOR"
+            elif warning_ratio >= 0.1:
+                quality = "DEGRADED"
+        quality_detail = f"{quality} (SANITY skipped → downgraded)"
+        quality_style = "yellow"
 
     severity_table = Table(title="Validation Summary", show_lines=True)
     severity_table.add_column("Severity")
@@ -98,7 +116,9 @@ def render_summary(
         severity_table.add_row(severity.value, str(count), fitid_display)
 
     console.print(severity_table)
-    console.print(Panel.fit(f"Overall quality: {quality}", title="Quality Indicator"))
+    console.print(
+        Panel.fit(f"Quality: {quality_detail}", title="Quality Indicator", style=quality_style)
+    )
 
     if issues:
         for issue in issues:
