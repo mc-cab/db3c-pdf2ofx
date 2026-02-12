@@ -515,11 +515,40 @@ def main(
                     merged = validation.statement
                     issues.extend(validation.issues)
                     if collision_count:
-                        merged["transactions"] = original_transactions
-                    payload = emit_ofx(merged, output_format)
-                    out_path = output_dir / f"concat_{timestamp_slug()}.ofx"
-                    safe_write_bytes(out_path, payload)
-                    output_files.append(str(out_path))
+                        # The validator deduplicates FITIDs (keeps first,
+                        # drops subsequent).  We intentionally preserve all
+                        # occurrences for collision FITIDs — the user was
+                        # already warned.  Only restore collision duplicates
+                        # that are individually valid, not every transaction
+                        # the validator may have rejected for other reasons.
+                        collision_set = set(collision_fitids)
+                        validated_ids = {id(tx) for tx in merged["transactions"]}
+                        for tx in original_transactions:
+                            if id(tx) not in validated_ids and tx.get("fitid") in collision_set:
+                                merged["transactions"].append(tx)
+                    try:
+                        payload = emit_ofx(merged, output_format)
+                        out_path = output_dir / f"concat_{timestamp_slug()}.ofx"
+                        safe_write_bytes(out_path, payload)
+                        output_files.append(str(out_path))
+                    except Exception as exc:
+                        issues.append(
+                            Issue(
+                                severity=Severity.ERROR,
+                                reason="failed to write concatenated OFX",
+                                count=0,
+                            )
+                        )
+                        for item in statements:
+                            index = result_index.get(item.name)
+                            if index is not None:
+                                prev_name = results[index].name
+                                results[index] = PdfResult(
+                                    name=prev_name,
+                                    ok=False,
+                                    stage=Stage.WRITE.value,
+                                    message=str(exc),
+                                )
             else:
                 output_mode = "N/A"
                 output_format = "N/A"

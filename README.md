@@ -11,6 +11,26 @@ input/*.pdf ──► Mindee API ──► normalize ──► validate ──�
 
 ## Quick Start
 
+### Set environment variables
+
+Required for processing real PDFs (not needed for dev mode):
+
+```cmd
+setx MINDEE_V2_API_KEY "your-api-key"
+setx MINDEE_MODEL_ID   "your-model-id"
+```
+
+Then **open a new terminal** (`setx` only takes effect in new sessions).
+
+Alternatively, create a `.env` file in the project root:
+
+```
+MINDEE_V2_API_KEY=your-api-key
+MINDEE_MODEL_ID=your-model-id
+```
+
+The app loads `.env` automatically. The file is gitignored.
+
 ### Using uv (recommended)
 
 ```bash
@@ -193,6 +213,17 @@ uv run pytest -q
 # pip
 python -m pytest -q
 ```
+
+### Individual Tests
+
+| Test file | Command | Description |
+|-----------|---------|-------------|
+| `test_cli.py` | `uv run pytest tests/test_cli.py -v` | CLI smoke test: invokes Typer with --dev-canonical, --dev-non-interactive, --dev-simulate-failure; verifies exit code 0, OFX output exists, and tmp/ is preserved on partial failure. |
+| `test_canonicalize.py` | `uv run pytest tests/test_canonicalize.py -v` | Normalization: loads Mindee custom schema fixture and verifies canonicalize_mindee produces correct account, period, transaction dates, amounts, names, and memos. |
+| `test_fitid.py` | `uv run pytest tests/test_fitid.py -v` | FITID determinism: verifies compute_fitid returns identical hashes for identical inputs, and assign_fitids produces unique FITIDs for duplicate transactions (via sequence counter). |
+| `test_ofx_emitter.py` | `uv run pytest tests/test_ofx_emitter.py -v` | OFX emission: builds a canonical statement, runs validation and FITID assignment, emits OFX2, and checks required OFX tags (CURDEF, BANKACCTFROM, STMTTRN, FITID) are present. |
+| `test_validator.py` | `uv run pytest tests/test_validator.py -v` | Contract validation: verifies validator derives trntype, passes clean statements, drops transactions with missing fields, and warns on debit/credit conflicts. |
+| `test_mindee_integration.py` | `uv run pytest tests/test_mindee_integration.py -v` | Live Mindee API integration: calls real API with PDF from fixtures, normalizes, assigns FITIDs, validates, and checks full pipeline. Skipped if env vars or test PDFs are missing. |
 
 Test extras: `pip install -e ".[test]"` or `uv sync` (auto-includes test deps).
 
