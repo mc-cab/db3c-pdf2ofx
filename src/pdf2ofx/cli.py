@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Iterable
@@ -737,6 +739,29 @@ def main(
                     )
                     if keep == "delete":
                         safe_delete_dir(tmp_dir)
+
+            if not dev_mode and sources:
+                run_date = date.today().isoformat()
+                processed_dir = base_dir / "processed" / run_date
+                failed_dir = base_dir / "failed" / run_date
+                moved_ok = 0
+                moved_fail = 0
+                for source_path, result in zip(sources, results):
+                    if not source_path.exists():
+                        continue
+                    if result.ok:
+                        processed_dir.mkdir(parents=True, exist_ok=True)
+                        shutil.move(str(source_path), str(processed_dir / source_path.name))
+                        moved_ok += 1
+                    else:
+                        failed_dir.mkdir(parents=True, exist_ok=True)
+                        shutil.move(str(source_path), str(failed_dir / source_path.name))
+                        moved_fail += 1
+                if moved_ok or moved_fail:
+                    console.print(
+                        f"[dim]Moved {moved_ok} to processed/{run_date}/, "
+                        f"{moved_fail} to failed/{run_date}/[/dim]"
+                    )
 
             fitid_to_json: dict[str, tuple[str, int, int]] = {}
             for item in statements:

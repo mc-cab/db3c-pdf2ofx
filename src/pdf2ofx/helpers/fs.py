@@ -14,6 +14,8 @@ def ensure_dirs(base_dir: Path) -> dict[str, Path]:
         "input": base_dir / "input",
         "output": base_dir / "output",
         "tmp": base_dir / "tmp",
+        "processed": base_dir / "processed",
+        "failed": base_dir / "failed",
         "handlers": base_dir / "handlers",
         "normalizers": base_dir / "normalizers",
         "validators": base_dir / "validators",
@@ -21,7 +23,13 @@ def ensure_dirs(base_dir: Path) -> dict[str, Path]:
         "helpers": base_dir / "helpers",
         "tests": base_dir / "tests",
     }
-    for path in (paths["input"], paths["output"], paths["tmp"]):
+    for path in (
+        paths["input"],
+        paths["output"],
+        paths["tmp"],
+        paths["processed"],
+        paths["failed"],
+    ):
         path.mkdir(parents=True, exist_ok=True)
     return paths
 
