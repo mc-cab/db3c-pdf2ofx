@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-import pdf2ofx
+from pdf2ofx.cli import app
 
 
 def test_cli_smoke(tmp_path: Path) -> None:
@@ -21,7 +21,7 @@ def test_cli_smoke(tmp_path: Path) -> None:
 
     runner = CliRunner()
     result = runner.invoke(
-        pdf2ofx.app,
+        app,
         [
             "--dev-canonical",
             str(canonical_a),

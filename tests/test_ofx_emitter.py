@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from converters.ofx_emitter import emit_ofx
-from validators.contract_validator import validate_statement
-from normalizers.fitid import assign_fitids
+from pdf2ofx.converters.ofx_emitter import emit_ofx
+from pdf2ofx.validators.contract_validator import validate_statement
+from pdf2ofx.normalizers.fitid import assign_fitids
 
 
 def _statement() -> dict:

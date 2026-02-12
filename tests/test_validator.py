@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from helpers.reporting import Severity
-from validators.contract_validator import validate_statement
+from pdf2ofx.helpers.reporting import Severity
+from pdf2ofx.validators.contract_validator import validate_statement
 
 
 def _base_statement() -> dict:

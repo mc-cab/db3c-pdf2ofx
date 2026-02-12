@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from decimal import Decimal
 
-from normalizers.canonicalize import canonicalize_mindee
+from pdf2ofx.normalizers.canonicalize import canonicalize_mindee
 
 
 def test_canonicalize_schema_a(tmp_path: Path) -> None:

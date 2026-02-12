@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pdf2ofx"
 version = "0.1.1"
@@ -16,6 +20,12 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+
+[project.scripts]
+pdf2ofx = "pdf2ofx.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
