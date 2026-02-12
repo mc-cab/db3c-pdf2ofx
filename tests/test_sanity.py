@@ -128,7 +128,7 @@ class TestComputeReconciliation:
 class TestComputeQualityScore:
 
     def test_perfect(self) -> None:
-        score, label = compute_quality_score(
+        score, label, deductions = compute_quality_score(
             reconciliation_status="OK",
             balances_missing=False,
             drop_ratio=0.0,
@@ -136,9 +136,10 @@ class TestComputeQualityScore:
         )
         assert score == 100
         assert label == "GOOD"
+        assert deductions == []
 
     def test_error_drops_to_poor(self) -> None:
-        score, label = compute_quality_score(
+        score, label, deductions = compute_quality_score(
             reconciliation_status="ERROR",
             balances_missing=False,
             drop_ratio=0.0,
@@ -146,9 +147,10 @@ class TestComputeQualityScore:
         )
         assert score == 40
         assert label == "POOR"
+        assert ("Reconciliation error", -60) in deductions
 
     def test_balances_missing(self) -> None:
-        score, label = compute_quality_score(
+        score, label, deductions = compute_quality_score(
             reconciliation_status="SKIPPED",
             balances_missing=True,
             drop_ratio=0.0,
@@ -156,9 +158,10 @@ class TestComputeQualityScore:
         )
         assert score == 75
         assert label == "DEGRADED"
+        assert ("Balances missing", -25) in deductions
 
     def test_high_drop_rate(self) -> None:
-        score, label = compute_quality_score(
+        score, label, deductions = compute_quality_score(
             reconciliation_status="OK",
             balances_missing=False,
             drop_ratio=0.15,
@@ -166,19 +169,21 @@ class TestComputeQualityScore:
         )
         assert score == 85
         assert label == "GOOD"
+        assert any("drop rate" in r for r, _ in deductions)
 
     def test_warnings_capped(self) -> None:
         """Warning deduction is capped at 30."""
-        score, _ = compute_quality_score(
+        score, _, deductions = compute_quality_score(
             reconciliation_status="OK",
             balances_missing=False,
             drop_ratio=0.0,
             warning_count=10,
         )
         assert score == 70  # 100 - min(100, 30)
+        assert ("10 validation warning(s)", -30) in deductions
 
     def test_low_confidence(self) -> None:
-        score, _ = compute_quality_score(
+        score, _, deductions = compute_quality_score(
             reconciliation_status="OK",
             balances_missing=False,
             drop_ratio=0.0,
@@ -186,9 +191,10 @@ class TestComputeQualityScore:
             low_mindee_confidence=True,
         )
         assert score == 85
+        assert ("Low Mindee confidence", -15) in deductions
 
     def test_floor_at_zero(self) -> None:
-        score, label = compute_quality_score(
+        score, label, deductions = compute_quality_score(
             reconciliation_status="ERROR",
             balances_missing=True,
             drop_ratio=0.5,
@@ -197,6 +203,7 @@ class TestComputeQualityScore:
         )
         assert score == 0
         assert label == "POOR"
+        assert len(deductions) == 5  # all deductions present
 
 
 # ---------------------------------------------------------------------------

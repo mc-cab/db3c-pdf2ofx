@@ -20,10 +20,13 @@ from pdf2ofx.helpers.fs import (
     ensure_dirs,
     list_pdfs,
     load_local_settings,
+    normalize_ofx_filename,
     safe_delete_dir,
     safe_write_bytes,
     save_local_settings,
     timestamp_slug,
+    tmp_json_path,
+    transaction_line_numbers,
     write_json,
 )
 from pdf2ofx.helpers.reporting import Issue, Severity
@@ -37,6 +40,21 @@ from pdf2ofx.validators.contract_validator import ValidationError, validate_stat
 
 app = typer.Typer(add_completion=False)
 console = Console()
+
+
+def _scan_ofx_fitids(ofx_path: Path) -> dict[str, int]:
+    """Scan an OFX file and return {fitid: line_number}."""
+    fitid_map: dict[str, int] = {}
+    try:
+        with ofx_path.open("r", encoding="utf-8") as f:
+            for line_num, line in enumerate(f, start=1):
+                stripped = line.strip()
+                if stripped.startswith("<FITID>") and stripped.endswith("</FITID>"):
+                    fitid = stripped[7:-8]
+                    fitid_map[fitid] = line_num
+    except Exception:
+        pass
+    return fitid_map
 
 
 class UserAbort(Exception):
@@ -207,22 +225,22 @@ def _process_raw_pdf(
     pdf_path: Path,
     api_key: str,
     model_id: str,
-    tmp_dir: Path,
+    tmp_json_path: Path,
     account_defaults: dict,
 ) -> tuple[dict, list[str], dict]:
     raw = infer_pdf(api_key, model_id, pdf_path)
-    write_json(tmp_dir / f"{pdf_path.stem}.json", raw)
+    write_json(tmp_json_path, raw)
     normalization = canonicalize_mindee(raw, account_defaults=account_defaults)
     return normalization.statement, normalization.warnings, raw
 
 
 def _process_dev_canonical(
     canonical_path: Path,
-    tmp_dir: Path,
+    tmp_json_path: Path,
 ) -> dict:
     with canonical_path.open("r", encoding="utf-8") as handle:
         statement = json.load(handle)
-    write_json(tmp_dir / f"{canonical_path.stem}.json", {"dev_mode": True})
+    write_json(tmp_json_path, {"dev_mode": True})
     return statement
 
 
@@ -367,6 +385,9 @@ def main(
             pdf_notes: dict[str, list[str]] = {}
             statements: list[ProcessItem] = []
             sanity_results: list[SanityResult] = []
+            fitid_lines: dict[str, int] = {}
+            json_transaction_lines: dict[str, list[int]] = {}
+            stem_to_tmp_path: dict[str, Path] = {}
 
             settings_path = base_dir / "local_settings.json"
             settings = load_local_settings(settings_path)
@@ -383,14 +404,21 @@ def main(
 
             for index, source in enumerate(sources):
                 try:
+                    tmp_path = tmp_json_path(tmp_dir, source.stem)
+                    stem_to_tmp_path[source.stem] = tmp_path
+
                     if dev_mode:
-                        statement = _process_dev_canonical(source, tmp_dir)
+                        statement = _process_dev_canonical(source, tmp_path)
                         per_warnings: list[str] = []
                         raw_response: dict | None = None
                     else:
                         statement, per_warnings, raw_response = _process_raw_pdf(
-                            source, api_key, model_id, tmp_dir, settings
+                            source, api_key, model_id, tmp_path, settings
                         )
+
+                    json_transaction_lines[source.stem] = transaction_line_numbers(
+                        tmp_path
+                    )
 
                     statement, account_issues = _ensure_account_id(
                         statement, settings, allow_prompt=not dev_non_interactive
@@ -575,9 +603,17 @@ def main(
                     for item in statements:
                         try:
                             payload = emit_ofx(item.statement, output_format)
-                            out_path = output_dir / f"{item.name}.ofx"
+                            acct = item.statement.get("account", {})
+                            period = item.statement.get("period", {})
+                            ofx_name = normalize_ofx_filename(
+                                account_id=acct.get("account_id", "UNKNOWN"),
+                                period_end=period.get("end_date", "undated"),
+                                source_name=item.name,
+                            )
+                            out_path = output_dir / ofx_name
                             safe_write_bytes(out_path, payload)
                             output_files.append(str(out_path))
+                            fitid_lines.update(_scan_ofx_fitids(out_path))
                         except Exception as exc:
                             issues.append(
                                 Issue(
@@ -643,9 +679,16 @@ def main(
                                 merged["transactions"].append(tx)
                     try:
                         payload = emit_ofx(merged, output_format)
-                        out_path = output_dir / f"concat_{timestamp_slug()}.ofx"
+                        acct = merged.get("account", {})
+                        concat_name = normalize_ofx_filename(
+                            account_id=acct.get("account_id", "UNKNOWN"),
+                            period_end=timestamp_slug(),
+                            source_name="concat",
+                        )
+                        out_path = output_dir / concat_name
                         safe_write_bytes(out_path, payload)
                         output_files.append(str(out_path))
+                        fitid_lines.update(_scan_ofx_fitids(out_path))
                     except Exception as exc:
                         issues.append(
                             Issue(
@@ -670,7 +713,21 @@ def main(
 
             all_ok = all(result.ok for result in results)
             if all_ok:
-                safe_delete_dir(tmp_dir)
+                if dev_non_interactive:
+                    safe_delete_dir(tmp_dir)
+                else:
+                    cleanup = _prompt_select(
+                        "Delete tmp/ (Mindee JSON responses)?",
+                        choices=[
+                            ("Delete (default)", "delete"),
+                            ("Keep for inspection", "keep"),
+                        ],
+                        default="delete",
+                    )
+                    if cleanup == "delete":
+                        safe_delete_dir(tmp_dir)
+                    else:
+                        console.print("[dim]tmp/ preserved for inspection[/dim]")
             else:
                 if not dev_non_interactive:
                     keep = _prompt_select(
@@ -680,6 +737,19 @@ def main(
                     )
                     if keep == "delete":
                         safe_delete_dir(tmp_dir)
+
+            fitid_to_json: dict[str, tuple[str, int, int]] = {}
+            for item in statements:
+                lines_list = json_transaction_lines.get(item.name, [])
+                tmp_path = stem_to_tmp_path.get(item.name)
+                for idx, tx in enumerate(item.statement.get("transactions", [])):
+                    fid = tx.get("fitid")
+                    if not fid:
+                        continue
+                    one_based = idx + 1
+                    json_line = lines_list[idx] if idx < len(lines_list) else 0
+                    path_str = str(tmp_path) if tmp_path else ""
+                    fitid_to_json[fid] = (path_str, one_based, json_line)
 
             render_summary(
                 console,
@@ -694,6 +764,8 @@ def main(
                     len(item.statement.get("transactions", [])) for item in statements
                 ),
                 sanity_results=sanity_results,
+                fitid_lines=fitid_lines,
+                fitid_to_json=fitid_to_json,
             )
             if not output_files:
                 console.print(

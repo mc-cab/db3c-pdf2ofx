@@ -34,6 +34,7 @@ class SanityResult:
     quality_score: int
     quality_label: str                  # GOOD | DEGRADED | POOR
     warnings: list[str] = field(default_factory=list)
+    deductions: list[tuple[str, int]] = field(default_factory=list)
     skipped: bool = False
 
 
@@ -148,18 +149,30 @@ def compute_quality_score(
     drop_ratio: float,
     warning_count: int,
     low_mindee_confidence: bool = False,
-) -> tuple[int, str]:
-    """Return (score, label).  Score in [0, 100]."""
+) -> tuple[int, str, list[tuple[str, int]]]:
+    """Return (score, label, deductions).  Score in [0, 100]."""
     score = 100
+    deductions: list[tuple[str, int]] = []
+
     if reconciliation_status == "ERROR":
         score -= 60
+        deductions.append(("Reconciliation error", -60))
     if balances_missing:
         score -= 25
+        deductions.append(("Balances missing", -25))
     if drop_ratio > 0.10:
         score -= 15
-    score -= min(warning_count * 10, 30)
+        deductions.append((f"High drop rate ({drop_ratio:.0%})", -15))
+    warning_deduction = min(warning_count * 10, 30)
+    if warning_deduction > 0:
+        score -= warning_deduction
+        deductions.append(
+            (f"{warning_count} validation warning(s)", -warning_deduction)
+        )
     if low_mindee_confidence:
         score -= 15
+        deductions.append(("Low Mindee confidence", -15))
+
     score = max(score, 0)
 
     if score >= 80:
@@ -168,7 +181,7 @@ def compute_quality_score(
         label = "DEGRADED"
     else:
         label = "POOR"
-    return score, label
+    return score, label, deductions
 
 
 # ---------------------------------------------------------------------------
@@ -231,7 +244,7 @@ def compute_sanity(
             if hasattr(issue, "severity") and str(issue.severity.value) == "WARNING":
                 warning_count += 1
 
-    quality_score, quality_label = compute_quality_score(
+    quality_score, quality_label, deductions = compute_quality_score(
         reconciliation_status=recon_status,
         balances_missing=balances_missing,
         drop_ratio=drop_ratio,
@@ -264,5 +277,6 @@ def compute_sanity(
         quality_score=quality_score,
         quality_label=quality_label,
         warnings=warnings,
+        deductions=deductions,
         skipped=False,
     )

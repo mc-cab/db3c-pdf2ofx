@@ -94,6 +94,10 @@ def render_sanity_panel(console: Console, result: SanityResult) -> None:
         f"({result.quality_score}/100)"
     )
 
+    if result.deductions:
+        for reason, points in result.deductions:
+            lines.append(f"  [dim]{points:+d}  {reason}[/dim]")
+
     if result.warnings:
         lines.append("")
         for w in result.warnings:

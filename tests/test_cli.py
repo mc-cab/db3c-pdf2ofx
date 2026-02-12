@@ -35,5 +35,7 @@ def test_cli_smoke(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
-    assert (base_dir / "output" / "statement_b.ofx").exists()
+    ofx_files = list((base_dir / "output").glob("*.ofx"))
+    assert len(ofx_files) == 1, f"Expected 1 OFX file, got {ofx_files}"
+    assert ofx_files[0].name.startswith("ACC123_2024-01-31_")
     assert (base_dir / "tmp").exists()

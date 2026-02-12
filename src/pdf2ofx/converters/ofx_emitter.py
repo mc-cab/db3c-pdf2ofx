@@ -22,6 +22,30 @@ from ofxtools.models.bank.stmt import LEDGERBAL
 
 OFXFormat = Literal["OFX2", "OFX1"]
 
+_OFX_NAME_MAX = 32
+_OFX_MEMO_MAX = 254
+
+
+def _split_name_memo(
+    name: str | None, memo: str | None,
+) -> tuple[str | None, str | None]:
+    """Ensure NAME fits the OFX 32-char limit; overflow goes to MEMO."""
+    if not name or len(name) <= _OFX_NAME_MAX:
+        return name, memo
+    # Try to truncate at a word boundary (keep at least 10 chars)
+    truncated = name[:_OFX_NAME_MAX]
+    last_space = truncated.rfind(" ")
+    if last_space > 10:
+        truncated = truncated[:last_space]
+    # Full description goes to MEMO
+    if memo:
+        full_memo = f"{name} | {memo}"
+    else:
+        full_memo = name
+    if len(full_memo) > _OFX_MEMO_MAX:
+        full_memo = full_memo[:_OFX_MEMO_MAX]
+    return truncated, full_memo
+
 
 def _to_datetime(value: str) -> datetime:
     parsed = datetime.fromisoformat(value)
@@ -37,14 +61,15 @@ def _build_ofx(statement: dict) -> OFX:
 
     stmt_trns = []
     for tx in transactions:
+        name, memo = _split_name_memo(tx.get("name"), tx.get("memo"))
         stmt_trns.append(
             STMTTRN(
                 trntype=tx["trntype"],
                 dtposted=_to_datetime(tx["posted_at"]),
                 trnamt=Decimal(tx["amount"]),
                 fitid=tx["fitid"],
-                name=tx.get("name"),
-                memo=tx.get("memo"),
+                name=name,
+                memo=memo,
             )
         )
 
