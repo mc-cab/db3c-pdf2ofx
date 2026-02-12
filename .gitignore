@@ -12,17 +12,9 @@ inbox/Collabs/
 # Ignore all files in the inbox folder (temporary holding area for confidential customer data)
 inbox/*
 
-# (Add other patterns here if confidential info could exist elsewhere)
-# Example: Ignore spreadsheets and text exports
-*.csv
-*.tsv
-*.xlsx
-*.xls
-*.txt
-# If you have a directory for raw data:
-raw_data/
-# End of Selection
-```
+# Ignore all files in the tmp folder (temporary holding area for confidential customer data)
+tmp/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
