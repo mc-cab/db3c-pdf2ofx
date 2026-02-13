@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from pathlib import Path
 
 from typer.testing import CliRunner
 
-from pdf2ofx.cli import app
+from pdf2ofx.cli import _run_sanity_stage, app
 
 
 def test_cli_smoke(tmp_path: Path) -> None:
@@ -39,3 +41,69 @@ def test_cli_smoke(tmp_path: Path) -> None:
     assert len(ofx_files) == 1, f"Expected 1 OFX file, got {ofx_files}"
     assert ofx_files[0].name.startswith("ACC123_2024-01-31_")
     assert (base_dir / "tmp").exists()
+
+
+def _minimal_statement() -> dict:
+    return {
+        "schema_version": "1.0",
+        "account": {"account_id": "ACC-123", "bank_id": "B", "account_type": "CHECKING", "currency": "EUR"},
+        "period": {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        "transactions": [
+            {"fitid": "F1", "posted_at": "2024-01-05", "amount": "-10.00", "debit": "10.00", "credit": None, "name": "X", "memo": "", "trntype": "DEBIT"},
+        ],
+    }
+
+
+def test_sanity_stage_includes_open_source_pdf_when_source_path_exists(tmp_path: Path) -> None:
+    """With source_path set and existing, SANITY menu includes 'Open source PDF' (v0.1.2)."""
+    from rich.console import Console
+
+    source_pdf = tmp_path / "stmt.pdf"
+    source_pdf.write_bytes(b"")
+    captured_choices: list[list[tuple[str, str]]] = []
+
+    def capture_and_accept(message: str, choices: list[tuple[str, str]], default: str) -> str:
+        captured_choices.append(choices)
+        return "accept"
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=capture_and_accept):
+        _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=source_pdf,
+            recovery_mode=False,
+        )
+    assert len(captured_choices) >= 1
+    choice_values = [v for _, v in captured_choices[0]]
+    assert "open" in choice_values
+
+
+def test_sanity_stage_auto_opens_pdf_on_edit_balances(tmp_path: Path) -> None:
+    """When user chooses Edit balances and source_path exists, open_path_in_default_app is called (v0.1.2)."""
+    from unittest.mock import MagicMock
+
+    from rich.console import Console
+
+    source_pdf = tmp_path / "stmt.pdf"
+    source_pdf.write_bytes(b"")
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "accept"]), patch(
+        "pdf2ofx.cli._prompt_text", return_value=""
+    ), patch("pdf2ofx.cli.open_path_in_default_app", MagicMock()) as mock_open:
+        _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=source_pdf,
+            recovery_mode=False,
+        )
+        mock_open.assert_called_once_with(source_pdf)

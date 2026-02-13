@@ -27,6 +27,8 @@ from pdf2ofx.helpers.fs import (
     load_local_settings,
     normalize_ofx_filename,
     open_path_in_default_app,
+    read_tmp_meta,
+    resolve_source_path_from_meta,
     safe_delete_dir,
     safe_write_bytes,
     save_local_settings,
@@ -35,6 +37,7 @@ from pdf2ofx.helpers.fs import (
     tmp_json_path,
     transaction_line_numbers,
     write_json,
+    write_tmp_meta,
 )
 from pdf2ofx.helpers.reporting import Issue, Severity
 from pdf2ofx.helpers.timing import Timer
@@ -92,6 +95,7 @@ class RecoveryCandidate:
     validation_issues: list
     sanity_result: SanityResult
     label: str  # hash + period + count + quality; stem if available
+    source_path: Path | None = None  # resolved PDF path from meta, or None for legacy tmp
 
 
 def _prompt_select(message: str, choices: list[tuple[str, str]], default: str) -> str:
@@ -398,6 +402,8 @@ def _run_sanity_stage(
             return result
 
         if action == "edit":
+            if source_path is not None and source_path.exists():
+                open_path_in_default_app(source_path)
             start_str = _prompt_text("Starting balance (or Enter to skip):")
             end_str = _prompt_text("Ending balance (or Enter to skip):")
 
@@ -427,6 +433,8 @@ def _run_sanity_stage(
             continue
 
         if action == "edit_tx":
+            if source_path is not None and source_path.exists():
+                open_path_in_default_app(source_path)
             transactions = statement.get("transactions", [])
             if not transactions:
                 continue
@@ -544,6 +552,43 @@ def _run_sanity_stage(
         return result
 
 
+# Legacy tmp backfill: stem -> source PDF name (for --backfill-tmp-meta)
+_BACKFILL_TMP_META_MAPPING: dict[str, str] = {
+    "e4e427277135": "deveil_09-2025.pdf",
+    "e36118847891": "deveil_05-2025.pdf",
+}
+
+
+def _backfill_tmp_meta(console: Console, base_dir: Path) -> None:
+    """Write missing tmp/<stem>.meta.json for known legacy tmp files (maintainer helper)."""
+    paths = ensure_dirs(base_dir)
+    tmp_dir = paths["tmp"]
+    input_dir = paths["input"]
+    processed_dir = paths["processed"]
+    written: list[str] = []
+    for stem, source_name in _BACKFILL_TMP_META_MAPPING.items():
+        tmp_path = tmp_dir / f"{stem}.json"
+        meta_path = tmp_dir / f"{stem}.meta.json"
+        if not tmp_path.exists() or meta_path.exists():
+            continue
+        candidate: Path = input_dir / source_name
+        if not candidate.exists() and processed_dir.exists():
+            for sub in processed_dir.iterdir():
+                if sub.is_dir():
+                    c = sub / source_name
+                    if c.exists():
+                        candidate = c
+                        break
+        if not candidate.exists():
+            candidate = input_dir / source_name
+        write_tmp_meta(tmp_path, candidate)
+        written.append(f"{stem}.json → {source_name}")
+    if written:
+        console.print("[dim]Backfill: wrote meta for " + ", ".join(written) + "[/dim]")
+    else:
+        console.print("[dim]Backfill: no missing meta to write.[/dim]")
+
+
 def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bool = False) -> None:
     """Recovery mode: list tmp/*.json, multi-select, SANITY, then convert from .canonical.json."""
     if dev_non_interactive:
@@ -606,7 +651,15 @@ def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bo
         start = period.get("start_date") or "?"
         end = period.get("end_date") or "?"
         period_str = f"{start} → {end}"
+        meta = read_tmp_meta(path)
+        source_path: Path | None = None
+        if meta:
+            source_path = resolve_source_path_from_meta(
+                meta, paths["processed"], paths["input"]
+            )
         label = f"{path.stem}  {period_str}  {extracted} tx  {sanity_result.quality_label} ({sanity_result.quality_score})"
+        if source_path is None:
+            label += "  (no source PDF)"
         recovery_candidates.append(
             RecoveryCandidate(
                 path=path,
@@ -615,6 +668,7 @@ def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bo
                 validation_issues=validation.issues,
                 sanity_result=sanity_result,
                 label=label,
+                source_path=source_path,
             )
         )
 
@@ -653,15 +707,16 @@ def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bo
                 statement = json.loads(canon_path.read_text(encoding="utf-8"))
                 extracted = len(statement.get("transactions", []))
                 try:
+                    pdf_display_name = (c.source_path.name if c.source_path else c.path.name)
                     sanity_result = _run_sanity_stage(
                         console=console,
                         statement=statement,
-                        pdf_name=c.path.name,
+                        pdf_name=pdf_display_name,
                         extracted_count=extracted,
                         raw_response=c.raw,
                         validation_issues=c.validation_issues,
                         dev_non_interactive=False,
-                        source_path=None,
+                        source_path=c.source_path,
                         recovery_mode=True,
                     )
                     write_json(canon_path, statement, decimal_to_str=True)
@@ -790,6 +845,12 @@ def main(
         help="(dev) Override base directory.",
         hidden=True,
     ),
+    backfill_tmp_meta: bool = typer.Option(
+        False,
+        "--backfill-tmp-meta",
+        help="(maintainer) Write missing tmp/<hash>.meta.json for known legacy tmp files.",
+        hidden=True,
+    ),
 ) -> None:
     _load_env()
     render_banner(console)
@@ -797,6 +858,8 @@ def main(
 
     with Timer() as timer:
         try:
+            if backfill_tmp_meta:
+                _backfill_tmp_meta(console, base_dir)
             if not dev_non_interactive:
                 choice = _prompt_select(
                     "Start pdf2ofx?",
@@ -853,6 +916,7 @@ def main(
                         statement, per_warnings, raw_response = _process_raw_pdf(
                             source, api_key, model_id, tmp_path, settings
                         )
+                        write_tmp_meta(tmp_path, source)
 
                     json_transaction_lines[source.stem] = transaction_line_numbers(
                         tmp_path

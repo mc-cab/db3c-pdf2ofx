@@ -11,9 +11,12 @@ from pdf2ofx.converters.ofx_emitter import emit_ofx
 from pdf2ofx.helpers.fs import (
     ensure_recovery_dir,
     list_tmp_jsons,
+    read_tmp_meta,
+    resolve_source_path_from_meta,
     selective_tmp_cleanup,
     transaction_line_numbers,
     write_json,
+    write_tmp_meta,
 )
 from pdf2ofx.validators.contract_validator import validate_statement
 
@@ -98,6 +101,16 @@ def test_list_tmp_jsons_excludes_raw_and_canonical_suffix(tmp_path: Path) -> Non
     assert got[0].name == "plain.json"
 
 
+def test_list_tmp_jsons_excludes_meta_json(tmp_path: Path) -> None:
+    """Exclude *.meta.json so sidecar files are not recovery candidates."""
+    (tmp_path / "a1.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "a1.meta.json").write_text('{"source_pdf_path":"/x.pdf","source_name":"x.pdf"}', encoding="utf-8")
+    (tmp_path / "b2.meta.json").write_text("{}", encoding="utf-8")
+    got = list_tmp_jsons(tmp_path)
+    assert len(got) == 1
+    assert got[0].name == "a1.json"
+
+
 def test_list_tmp_jsons_empty_when_dir_missing(tmp_path: Path) -> None:
     assert list_tmp_jsons(tmp_path / "nonexistent") == []
 
@@ -175,6 +188,72 @@ def test_write_json_decimal_to_str_downstream_compatibility(tmp_path: Path) -> N
     payload = emit_ofx(result.statement, "OFX2")
     assert isinstance(payload, bytes)
     assert b"FIT1" in payload or b"STMTTRN" in payload
+
+
+# ---------------------------------------------------------------------------
+# write_tmp_meta / read_tmp_meta: provenance sidecar (v0.1.2)
+# ---------------------------------------------------------------------------
+
+
+def test_write_tmp_meta_read_tmp_meta_roundtrip(tmp_path: Path) -> None:
+    """write_tmp_meta creates .meta.json; read_tmp_meta returns dict with source_pdf_path, source_name."""
+    tmp_json = tmp_path / "abc123.json"
+    tmp_json.write_text("{}", encoding="utf-8")
+    source_pdf = tmp_path / "input" / "statement_01-2025.pdf"
+    source_pdf.parent.mkdir(parents=True)
+    source_pdf.write_bytes(b"")
+    write_tmp_meta(tmp_json, source_pdf)
+    meta = read_tmp_meta(tmp_json)
+    assert meta is not None
+    assert meta["source_name"] == "statement_01-2025.pdf"
+    assert "statement_01-2025.pdf" in meta["source_pdf_path"]
+    assert (tmp_path / "abc123.meta.json").exists()
+
+
+def test_read_tmp_meta_returns_none_when_missing(tmp_path: Path) -> None:
+    """read_tmp_meta returns None when sidecar does not exist."""
+    tmp_json = tmp_path / "nonexistent.json"
+    tmp_json.write_text("{}", encoding="utf-8")
+    assert read_tmp_meta(tmp_json) is None
+
+
+def test_read_tmp_meta_returns_none_when_invalid(tmp_path: Path) -> None:
+    """read_tmp_meta returns None for invalid JSON or missing required keys."""
+    tmp_json = tmp_path / "bad.json"
+    tmp_json.write_text("{}", encoding="utf-8")
+    (tmp_path / "bad.meta.json").write_text("not json", encoding="utf-8")
+    assert read_tmp_meta(tmp_json) is None
+    (tmp_path / "bad.meta.json").write_text('{"only":"key"}', encoding="utf-8")
+    assert read_tmp_meta(tmp_json) is None
+
+
+def test_resolve_source_path_from_meta_order(tmp_path: Path) -> None:
+    """Resolution order: meta path if exists, then processed/<name>, then input/<name>."""
+    input_dir = tmp_path / "input"
+    processed_dir = tmp_path / "processed"
+    input_dir.mkdir()
+    processed_dir.mkdir()
+    (processed_dir / "2025-02").mkdir()
+    pdf_in_processed = processed_dir / "2025-02" / "stmt.pdf"
+    pdf_in_processed.write_bytes(b"")
+    pdf_in_input = input_dir / "stmt.pdf"
+    pdf_in_input.write_bytes(b"")
+
+    meta_existing = {"source_pdf_path": str(pdf_in_processed.resolve()), "source_name": "stmt.pdf"}
+    got = resolve_source_path_from_meta(meta_existing, processed_dir, input_dir)
+    assert got == pdf_in_processed
+
+    meta_moved = {"source_pdf_path": str((tmp_path / "gone.pdf").resolve()), "source_name": "stmt.pdf"}
+    got = resolve_source_path_from_meta(meta_moved, processed_dir, input_dir)
+    assert got == pdf_in_processed  # found in processed/2025-02/stmt.pdf
+
+    (processed_dir / "2025-02" / "stmt.pdf").unlink()
+    got = resolve_source_path_from_meta(meta_moved, processed_dir, input_dir)
+    assert got == pdf_in_input
+
+    pdf_in_input.unlink()
+    got = resolve_source_path_from_meta(meta_moved, processed_dir, input_dir)
+    assert got is None
 
 
 def test_write_json_decimal_to_str_raises_on_other_non_serializable(tmp_path: Path) -> None:

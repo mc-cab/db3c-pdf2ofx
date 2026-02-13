@@ -58,7 +58,7 @@ def list_tmp_jsons(tmp_dir: Path) -> list[Path]:
 
     Excludes:
     - Any path under tmp/recovery/ (tmp/recovery/**)
-    - Any file named *.raw.json or *.canonical.json
+    - Any file named *.raw.json, *.canonical.json, or *.meta.json
 
     Returns sorted list of Paths. Does not create tmp_dir.
     """
@@ -72,6 +72,8 @@ def list_tmp_jsons(tmp_dir: Path) -> list[Path]:
         if recovery_dir in p.parents or p.parent == recovery_dir:
             continue
         if p.name.endswith(".raw.json") or p.name.endswith(".canonical.json"):
+            continue
+        if p.name.endswith(".meta.json"):
             continue
         candidates.append(p)
     return sorted(candidates)
@@ -111,6 +113,71 @@ def tmp_json_path(tmp_dir: Path, source_stem: str) -> Path:
     """Return a short, clickable tmp JSON path (no spaces, fixed length)."""
     slug = hashlib.sha256(source_stem.encode()).hexdigest()[:12]
     return tmp_dir / f"{slug}.json"
+
+
+def _meta_path_for_tmp_json(tmp_json_path: Path) -> Path:
+    """Sidecar meta path for a tmp JSON: same dir, same stem, .meta.json suffix."""
+    return tmp_json_path.with_name(tmp_json_path.stem + ".meta.json")
+
+
+def write_tmp_meta(tmp_json_path: Path, source_pdf_path: Path) -> None:
+    """Write provenance sidecar tmp/<stem>.meta.json for recovery.
+
+    Payload: source_pdf_path (resolved), source_name.
+    Call after a successful raw extraction (no Mindee changes).
+    """
+    meta_path = _meta_path_for_tmp_json(tmp_json_path)
+    payload = {
+        "source_pdf_path": str(source_pdf_path.resolve()),
+        "source_name": source_pdf_path.name,
+    }
+    with meta_path.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
+def read_tmp_meta(tmp_json_path: Path) -> dict | None:
+    """Read provenance sidecar for a tmp JSON. Returns dict with source_pdf_path, source_name or None."""
+    meta_path = _meta_path_for_tmp_json(tmp_json_path)
+    if not meta_path.exists():
+        return None
+    try:
+        with meta_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(data, dict) or "source_pdf_path" not in data or "source_name" not in data:
+        return None
+    return data
+
+
+def resolve_source_path_from_meta(
+    meta: dict,
+    processed_dir: Path,
+    input_dir: Path,
+) -> Path | None:
+    """Resolve the source PDF path from meta, resilient to PDF move to processed/.
+
+    Order: 1) meta['source_pdf_path'] if exists; 2) processed/<run_date>/source_name;
+    3) input/source_name; 4) None.
+    """
+    source_name = meta.get("source_name")
+    if not source_name:
+        return None
+    raw_path = meta.get("source_pdf_path")
+    if raw_path:
+        p = Path(raw_path)
+        if p.exists():
+            return p
+    if processed_dir.exists():
+        for sub in processed_dir.iterdir():
+            if sub.is_dir():
+                candidate = sub / source_name
+                if candidate.exists():
+                    return candidate
+    candidate = input_dir / source_name
+    if candidate.exists():
+        return candidate
+    return None
 
 
 def write_json(path: Path, payload: Any, *, decimal_to_str: bool = False) -> None:

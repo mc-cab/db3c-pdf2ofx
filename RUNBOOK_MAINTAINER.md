@@ -171,6 +171,13 @@ Recovery mode lets the operator re-run SANITY on existing `tmp/*.json` Mindee re
 3. **Artifacts:** For each selected candidate, two files are written under `tmp/recovery/`: `recover_<name>.raw.json` (raw Mindee; never overwritten) and `recover_<name>.canonical.json` (canonical statement; updated after SANITY).
 4. **Conversion:** OFX is emitted from `.canonical.json` only. See `docs/v0.1.1/SPEC.md` for the exact canonical statement format.
 
+### Recovery provenance (v0.1.2): meta sidecar
+
+- **At extraction time:** After each successful Mindee run, the CLI writes `tmp/<hash>.meta.json` with `source_pdf_path` (resolved) and `source_name`. This is the only place provenance is stored; tmp JSON filenames are hashes and do not encode the original path.
+- **Recovery resolution order:** When meta exists, the source PDF is resolved as: 1) `meta.source_pdf_path` if it exists; 2) `processed/<run_date>/<source_name>` (any run); 3) `input/<source_name>`. So PDFs moved to `processed/` after a run are still openable from Recovery.
+- **Legacy tmp:** Candidates without a meta file show "(no source PDF)" in the list and do not get "Open source PDF" in the SANITY menu. They remain fully recoverable for SANITY and conversion.
+- **Backfill:** Use `pdf2ofx --backfill-tmp-meta` (with optional `--base-dir`) to write missing meta for known legacy tmp files (see `_BACKFILL_TMP_META_MAPPING` in `cli.py`). Only writes when the tmp JSON exists and the meta file does not.
+
 ### Tmp retention rules (regular process)
 
 When the operator chooses "Delete tmp/" after a run:

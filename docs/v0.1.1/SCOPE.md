@@ -26,3 +26,7 @@
 - On confirm: convert using `.canonical.json` only; no Mindee.
 - Cleanup: prompt to delete or keep recovery copies; never touch original tmp.
 - Regular run: "Delete tmp/" only removes clean files; keep and report questionable (status/label/forced_accept per spec).
+
+## v0.1.2 addendum (provenance)
+
+- Provenance sidecar `tmp/<hash>.meta.json` (source_pdf_path, source_name) written at extraction; Recovery uses it so "Open source PDF" works and resolution tries meta path → processed/ → input/. Edit balances/transactions auto-opens the PDF when source is available. Legacy tmp without meta: "(no source PDF)", option hidden. See RUNBOOK "Recovery provenance" and DEBUG_SANITY_SOURCE_PDF_AND_AUTOOPEN.md.
