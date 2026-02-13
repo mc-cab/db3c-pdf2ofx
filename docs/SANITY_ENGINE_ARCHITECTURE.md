@@ -159,41 +159,41 @@ The engine runs in a loop until the operator chooses Accept or Skip. Each mutati
 
 ```
                     ┌─────────────────────────────────────────────────────────┐
-                    │                     SANITY Engine                        │
-                    │                                                          │
+                    │                     SANITY Engine                       │
+                    │                                                         │
    ┌───────────────►│  ┌─────────────┐                                        │
    │  Validated     │  │ Diagnostic  │  SanityResult (stats, reconciliation,  │
-   │  statement +   │  │   Layer     │  quality score)                         │
+   │  statement +   │  │   Layer     │  quality score)                        │
    │  raw + issues  │  └──────┬──────┘                                        │
-   │                │         │                                                │
-   │                │         ▼                                                │
+   │                │         │                                               │
+   │                │         ▼                                               │
    │                │  ┌─────────────┐  "Accept / Edit / Skip / …"            │
    │                │  │  Decision   │◄─────────── Operator choice            │
    │                │  │   Layer     │                                        │
    │                │  └──────┬──────┘                                        │
-   │                │         │                                                │
-   │                │         ▼                                                │
-   │                │  ┌─────────────┐  Filter by triage; force-accept rule;   │
-   │                │  │  Strategy   │  return target                          │
-   │                │  │   Layer     │                                         │
-   │                │  └──────┬──────┘                                         │
-   │                │         │                                                 │
-   │                │         ▼                                                 │
-   │                │  ┌─────────────┐  Balance override; remove tx;           │
-   │                │  │  Mutation   │  edit one tx; invert sign(s)             │
-   │                │  │   Layer     │                                          │
-   │                │  └──────┬──────┘                                          │
-   │                │         │                                                  │
-   │                │         │  (mutated statement or overrides)               │
-   │                │         └──────────────────┐                              │
-   │                │                             │                             │
-   │                │                             ▼                             │
-   │                │                    Re-run Diagnostic (compute_sanity)      │
-   │                │                    then show result  ─────────────────────┤
-   │                │                                                          │
-   └────────────────┤  Accept → return result (+ statement if mutated)       │
-                     │  Skip   → return result (skipped)                        │
-                     └─────────────────────────────────────────────────────────┘
+   │                │         │                                               │
+   │                │         ▼                                               │
+   │                │  ┌─────────────┐  Filter by triage; force-accept rule;  │
+   │                │  │  Strategy   │  return target                         │
+   │                │  │   Layer     │                                        │
+   │                │  └──────┬──────┘                                        │
+   │                │         │                                               │
+   │                │         ▼                                               │
+   │                │  ┌─────────────┐  Balance override; remove tx;          │
+   │                │  │  Mutation   │  edit one tx; invert sign(s)           │
+   │                │  │   Layer     │                                        │
+   │                │  └──────┬──────┘                                        │
+   │                │         │                                               │
+   │                │         │  (mutated statement or overrides)             │
+   │                │         └──────────────────┐                            │
+   │                │                             │                           │
+   │                │                             ▼                           │
+   │                │                    Re-run Diagnostic (compute_sanity)   │
+   │                │                    then show result  ───────────────────┤
+   │                │                                                         │
+   └────────────────┤  Accept → return result (+ statement if mutated)        │
+                    │  Skip   → return result (skipped)                       │
+                    └─────────────────────────────────────────────────────────┘
 ```
 
 **In words:**
