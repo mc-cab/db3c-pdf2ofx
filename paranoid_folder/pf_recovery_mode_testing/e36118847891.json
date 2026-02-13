@@ -1,0 +1,3866 @@
+{
+  "inference": {
+    "id": "a979b3c2-9ecb-4f70-b1f1-11f5110f415f",
+    "job": {
+      "id": "a979b3c2-9ecb-4f70-b1f1-11f5110f415f"
+    },
+    "model": {
+      "id": "721de552-09be-43ea-b1c5-7fb66a5c4e6f"
+    },
+    "file": {
+      "name": "deveil_05-2025.pdf",
+      "alias": null,
+      "page_count": 10,
+      "mime_type": "application/pdf"
+    },
+    "result": {
+      "fields": {
+        "bank_name": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "BNP PARIBAS"
+        },
+        "account_type": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "checking"
+        },
+        "currency": {
+          "locations": [],
+          "confidence": "High",
+          "value": "EUR"
+        },
+        "detected_iban": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "FR76 3000 4003 3100 0101 1405 456"
+        },
+        "detected_aid": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "30004 00331 00010114054 56"
+        },
+        "account_id": {
+          "locations": [],
+          "confidence": "Medium",
+          "value": "0001011405456"
+        },
+        "bank_id": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "BNPAFRPPXXX"
+        },
+        "start_date": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "2025-04-30"
+        },
+        "end_date": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": "2025-05-31"
+        },
+        "starting_balance": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": -3880.35
+        },
+        "ending_balance": {
+          "locations": [],
+          "confidence": "Certain",
+          "value": -6449.81
+        },
+        "transactions": {
+          "items": [
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REMISES D'ESPECES VRST ESPECES AUTOMATE 12/05/25 17H39 0134937"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 660.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 660.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-05-24"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-24"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-05-24"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VRST ESPECES AUTOMATE 24/05/25 16H36 0134937"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 500.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 500.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "2025-05-27"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REMISES DE CHEQUES REMISE CHEQUES BORDEREAU 04169352"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 126.5
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 126.5
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 126.5
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REMISES DE CARTES REM. CARTE OU EUROCHQ DU 0205 N.15909 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 64.74
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 64.74
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0205 N.44233 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 199.52
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 199.52
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0305 N.93412 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 16.2
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 16.2
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REM. CARTE OU EUROCHQ DU 0305 N.84300 DE 33LE BOUSCAT N.COM. 4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 413.76
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 413.76
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0505 N.36769 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 719.57
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 719.57
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0605 N.92994 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 40.9
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 40.9
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0605 N.25816 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 937.64
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 937.64
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-08"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0705 N.85534 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 164.39
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 164.39
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-08"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0705 N.74206 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 372.5
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 372.5
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0905 N.22603 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 35.65
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 35.65
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 0905 N.58374 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 240.42
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 240.42
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1005 N.00300 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 16.2
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 16.2
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1205 N.61085 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 351.89
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 351.89
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1005 N.91125 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 490.42
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 490.42
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1205 N.54286 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 781.91
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 781.91
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-14"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1305 N.00144 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 271.85
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 271.85
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-14"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1305 N.38761 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 401.93
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 401.93
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-14"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-14"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1405 N.32436 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 52.77
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 52.77
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-14"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-14"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1405 N.92343 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 91.32
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 91.32
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1505 N.37272 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 83.9
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 83.9
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1505 N.74020 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 366.1
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 366.1
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1605 N.81385 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 54.77
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 54.77
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1605 N.33121 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 337.82
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 337.82
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1905 N.30883 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 19.45
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 19.45
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 19.45
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1705 N.07426 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 34.92
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 34.92
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 1705 N.62021 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 91.53
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 91.53
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2005 N.08710 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 226.95
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 226.95
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2005 N.63812 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 525.14
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 525.14
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2105 N.12662 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 97.51
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 97.51
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2105 N.44160 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 438.04
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 438.04
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2205 N.06232 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 48.88
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 48.88
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REM. CARTE OU EUROCHQ DU 2205 N.94376 DE 33LE BOUSCAT N.COM. 4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 245.31
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 245.31
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REM. CARTE OU EUROCHQ DU 2305 N.28843 DE 33LE BOUSCAT N.COM. 4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 232.29
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 232.29
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2305 N.01770 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 585.44
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 585.44
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2405 N.76332 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 51.87
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 51.87
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2605 N.90114 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 155.82
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 155.82
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2605 N.38434 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 313.38
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 313.38
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2405 N.23724 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 358.77
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 358.77
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2705 N.27173 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 141.61
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 141.61
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2705 N.43113 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 380.59
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 380.59
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-29"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2805 N.83167 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 78.31
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 78.31
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-29"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 2805 N.50190 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 213.99
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 213.99
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-06-02"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 3105 N.96586 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 27.93
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 27.93
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-06-02"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 3005 N.59358 DE 33LE BOUSCAT N.COM.4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 53.87
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 53.87
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-06-02"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "REM. CARTE OU EUROCHQ DU 3005 N.20555 DE 33LE BOUSCAT N.COM.4506204014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 96.02
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 96.02
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-06-02"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REM. CARTE OU EUROCHQ DU 3105 N.87317 DE 33LE BOUSCAT N.COM. 4582508011"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 162.61
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 162.61
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "VIR SEPA RECU/FRM LYCAMOBILE S.A.R.L. /EID 3000089/RNF"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 2245.5
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 2245.5
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "REMBOURST CB DU 160525 VEEPEE SAINT-DENIS CARTE 4974XXXXXXXX7906"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 23.09
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 23.09
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 23.09
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "CHEQUE 8544456"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -1585.94
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 1585.94
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-22"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "CHEQUE 8544457"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -50.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 50.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "DU 020525 MC DONALD S SC EYSINES"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -16.65
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 16.65
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "DU 020525 CASTORAMA MERIGNAC2537/"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -17.9
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 17.9
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "DU 020525 CASTORAMA MERIGNAC2537/"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -27.8
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 27.8
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "DU 050525 VEEPEE SAINT-DENIS"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -66.78
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 66.78
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 050525 COCORICO FRAYSSINET-LE"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -94.3
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 94.3
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 060525 BRUDIS DACVL BRUGES"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -76.6
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 76.6
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 070525 DR FACCHETTI BORDEAUX"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -53.38
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 53.38
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-09"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 090525 CYCLES MARIANI PESSAC"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -42.83
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 42.83
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 160525 LEROY MERLIN MERIGNAC"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -0.39
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 0.39
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-20"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 200525 LA POSTE L33069 LE BOUSCAT"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -7.14
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 7.14
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-23"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 230525 CYCLES MARIANI PESSAC"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": -1994.83
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 1994.83
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 1994.83
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-25"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-25"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "DU 250525 MC DONALD S SC BORDEAUX"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -4.2
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 4.2
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-27"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "DU 270525 MTPK MERIADECK BORDEAUX"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -13.8
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 13.8
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "VIREMENT SEPA EMIS/MOTIF TRAVAUX TOITURE BOUSCAT/BEN ETB LE TAILLAN MEDOC /REFDO /REF"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 3000.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 3000.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 3000.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-06"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR SCT INST EMIS /PID BA5BD0ED2A42492FA002D32E2426E97B /IID /SDT 250506 /EID NOTPROVIDED /RNF ALIMENTATION COMPTE JOINT"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 300.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 300.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 300.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-07"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR SCT INST EMIS /PID DC0ECFE656014771A99C9C0DA9968A82 IIID /SDT 250507 /EID NOTPROVIDED /RNF ALIMENTATION COMPTE JOINT"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 2550.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 2550.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 2550.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "VIREMENT FAVEUR TIERS VR.PERMANENT MUTUELLE"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 104.01
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 104.01
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 104.01
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "VIREMENT FAVEUR TIERS VR.PERMANENT COMPTABLE"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 120.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 120.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 120.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "VIREMENT FAVEUR TIERS VR.PERMANENT ALIMENTATION COMPTE JOINT"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 524.39
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 524.39
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 524.39
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "VIR CPTE A CPTE EMIS /MOTIF LOYER /BEN SCI 2VEIL /REFDO /REF"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 2050.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 2050.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 2050.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-17"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-19"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR SCT INST EMIS /MOTIF ALIMENTATION COMPTE JOINT /BEN MLE LIENARD OU M /REFDO E59A09A08FB54872AF672C989B42661E /REF NOTPROVIDED"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 500.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 500.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-28"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "VIR CPTE A CPTE EMIS VR.PERMANENT FONDS DE ROULEMENT"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 10.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 10.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 10.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-29"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "VIR SCT INST EMIS /MOTIF ALIMENTATION COMPTE JOINT /BEN MLE LIENARD OU M /REFDO 921 C9C3983914DD399D809F24CBE03FE /REF NOTPROVIDED"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 200.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": 200.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 200.0
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-01"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-02"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "*ECHEANCE PRET 01349 61078719"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -507.11
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 507.11
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA URSSAF D AQUITAINE ECH/050525 ID EMETTEUR/FR50ZZZ197378 MDT/033077V2120181026114117R000464173 REF/RD677272504292213325220464173004007 LIB/UR 727000000604641734 MAI 25325220464173050525"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -194.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 194.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "PRLV SEPA GROUPAMA PROTECTION JURI ECH/120525 ID EMETTEUR/FR74ZZZ293946 MDT/MS53GPJ00005000700044901 REF/SM53-0017-2000050007000449000027850 LIB/00005000700044900002785076"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -24.35
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 24.35
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Certain",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-11"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-12"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "*ECHEANCE PRET 01349 61102387"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -391.31
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 391.31
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-13"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA BNP PARIBAS ECH/130525 ID EMETTEUR/FR94OPP001228 MDT/+ +OPP3000400331 PPR0004291620100203F REF/6B990000000012892ZZ1195HP2MZCHDJCIF LIB/BNP PROT.DU FOYER"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -10.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 10.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "PRLV SEPA COVERITY ECH/150525 ID EMETTEUR/FR69ZZZ8057E0 MDT/24B02291521-PKCOV101006-001 REF/3022008-2025019995635 LIB/PCOV CONTRAT PKCOV101 LC03-052025 RQ2025019995635"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -15.95
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 15.95
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "PRLV SEPA FUTUROSOFT ECH/150525 ID EMETTEUR/FR71ZZZ479755 MDT/AUT.3595 REF/1280RC25013941-1280C03595-FUT LIB/RGT FACTURES 1280FC25005756"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -105.6
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 105.6
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "PRLV SEPA COVERITY ECH/150525 ID EMETTEUR/FR69ZZZ8057E0 MDT/24B02291521-MRPFCOV101288-001 REF/3022078-20250210143010 LIB/PCOV CONTRAT MRPFCOV101 LC03-052025 RQ20250210143010"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -146.87
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 146.87
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-15"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA URSSAF D AQUITAINE ECH/150525 ID EMETTEUR/FR50ZZZ197378 MDT/+ +033077CT220130109171925A000014342 REF/TT407272505122009125120570997000454 LIB/UR 727000000605709977 FEV 25125120570997150525"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -669.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 669.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-16"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA SFR BUSINESS-SOCIETE FRANCAISE DU RADIOTELEPHONES. ECH/160525 ID EMETTEUR/FR44ZZZ332801 MDT/SBT20201002390 REF/18528963 LIB/9A0037424561"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -106.84
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": 106.84
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "High",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-21"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "High",
+                  "value": "PRLV SEPA B2B DGFIP IMPOT ECH/210525 ID EMETTEUR/FR46ZZZ005002 MDT/+ +511626715DGFIP20150150KJIG9MVLFO REF/220330440700136741931 LIB/TVA-052025-3310CA3"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -414.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 414.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA SOLOCAL SA 204, ROND-POINT DU PONTDE SEVRES-SOLOCAL ECH/260525 ID EMETTEUR/FR31 ZZZ117501 MDT/SLMP020593304 REF/01-SLSA61006772782025 LIB//INV/FORM:0002576492/07.05.2025/BDCU /NEDT2WTE8V"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -148.8
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 148.8
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA EDF ECH/300525 ID EMETTEUR/FR47EDF001007 MDT/+ +MA6801304535 REF/Z008856641552 99285 2 FELIX 992 LIB/LES CYCLES DU BOUSCAT REF EDF:8856641552 RUM: ++MA6801304535 2025-05-30"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -44.69
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 44.69
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-30"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PRLV SEPA LOCAM ECH/300525 ID EMETTEUR/FR91 ZZZ113026 MDT/LD157602320200044035 REF/LB1576023E05730052025++++DOSREML LIB/PRELEVEMENT LOCAM PARTENAIRE DE VISTALID RELOC DOSSIER 1576023 CONTRAT WWW LES-CYCLES-LOYER DU 30-05-2025"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -108.0
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 108.0
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-25"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-26"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "PAIEMENTS D'EFFETS\nPAIEMENT RELEVE EFFETS REG 2605 RELEVE 20073424"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -878.69
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 878.69
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            },
+            {
+              "locations": [],
+              "confidence": "Medium",
+              "fields": {
+                "operation_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "value_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-10"
+                },
+                "posting_date": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": "2025-05-05"
+                },
+                "description": {
+                  "locations": [],
+                  "confidence": "Medium",
+                  "value": "AUTRES OPERATIONS DEBIT *COMMISSIONS FACTURE NUMERO 20250501047172014"
+                },
+                "amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": -34.8
+                },
+                "debit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": 34.8
+                },
+                "credit_amount": {
+                  "locations": [],
+                  "confidence": "Certain",
+                  "value": null
+                }
+              }
+            }
+          ],
+          "confidence": "Medium"
+        }
+      },
+      "raw_text": null,
+      "rag": null
+    },
+    "active_options": {
+      "raw_text": false,
+      "polygon": false,
+      "confidence": true,
+      "rag": false,
+      "multipage_context": false,
+      "text_context": false,
+      "data_schema": {
+        "replace": false
+      }
+    }
+  }
+}
