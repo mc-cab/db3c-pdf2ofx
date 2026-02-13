@@ -59,6 +59,8 @@ If you have `tmp/*.json` from a previous run, you can re-run the SANITY review a
 
 **v0.1.3 –** Added transaction triage to speed up manual correction workflow.
 
+**v0.1.4 –** SANITY UX refactor + fast sign inversion for OCR debit/credit errors.
+
 ### Run without Mindee (dev mode)
 
 ```bash

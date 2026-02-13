@@ -125,6 +125,17 @@ def _prompt_confirm(message: str, default: bool) -> bool:
     return result == "yes"
 
 
+def _invert_tx_sign(tx: dict) -> None:
+    """Invert transaction sign in-place. Keeps Decimal; swaps debit/credit for canonical consistency."""
+    amt = tx.get("amount")
+    if amt is not None:
+        tx["amount"] = -(Decimal(str(amt)) if not isinstance(amt, Decimal) else amt)
+        tx["trntype"] = "CREDIT" if tx["amount"] >= 0 else "DEBIT"
+    debit, credit = tx.get("debit"), tx.get("credit")
+    tx["debit"] = credit
+    tx["credit"] = debit
+
+
 # Ignore-pair reasons: only these warning pairs skip the "open source PDF" prompt.
 BOTH_DEBIT_CREDIT = "transaction has both debit and credit amounts"
 SIGNED_VS_DEBIT = "signed amount does not match debit amount"
@@ -381,13 +392,11 @@ def _run_sanity_stage(
     while True:
         choices: list[tuple[str, str]] = [
             ("Accept", "accept"),
-            ("Edit balances", "edit"),
-            ("Edit transactions", "edit_tx"),
-            ("Transaction triage", "triage"),
+            ("Edit", "edit"),
             ("Skip reconciliation", "skip"),
         ]
         if source_path is not None and source_path.exists():
-            choices.append(("Open source PDF", "open"))
+            choices.append(("Preview source file", "open"))
         if recovery_mode:
             choices.append(("Back to list", "back_to_list"))
         action = _prompt_select(
@@ -401,51 +410,6 @@ def _run_sanity_stage(
 
         if action == "open":
             open_path_in_default_app(source_path)
-            continue
-
-        if action == "triage":
-            transactions_triage = statement.get("transactions", [])
-            if not transactions_triage:
-                continue
-            triage_sub = _prompt_select(
-                "Transaction triage:",
-                choices=[
-                    ("Validate transactions", "triage_validate"),
-                    ("Flag transactions", "triage_flag"),
-                    ("← Back", "back"),
-                ],
-                default="back",
-            )
-            if triage_sub == "back":
-                continue
-            checkbox_choices_triage = [
-                Choice(i, name=_tx_label(i, tx))
-                for i, tx in enumerate(transactions_triage)
-            ]
-            if triage_sub == "triage_validate":
-                msg = "Select transactions to mark as validated (Space to toggle, Enter to confirm):"
-            else:
-                msg = "Select transactions to flag for edit (Space to toggle, Enter to confirm):"
-            try:
-                selected_triage = inquirer.checkbox(
-                    message=msg,
-                    choices=checkbox_choices_triage,
-                ).execute()
-            except Exception:
-                continue
-            if selected_triage is None or len(selected_triage) == 0:
-                continue
-            recap_lines = [_tx_label(i, transactions_triage[i]) for i in selected_triage[:10]]
-            if len(selected_triage) > 10:
-                recap_lines.append(f"(+{len(selected_triage) - 10} more)")
-            for line in recap_lines:
-                console.print(line)
-            if not _prompt_confirm("Confirm selection?", True):
-                continue
-            if triage_sub == "triage_validate":
-                triage_state["valid"] |= set(selected_triage)
-            else:
-                triage_state["flagged"] |= set(selected_triage)
             continue
 
         if action == "skip":
@@ -463,47 +427,101 @@ def _run_sanity_stage(
         if action == "edit":
             if source_path is not None and source_path.exists():
                 open_path_in_default_app(source_path)
-            edit_bal_choice = _prompt_select(
-                "Edit balances:",
+            edit_sub = _prompt_select(
+                "Edit:",
                 choices=[
-                    ("← Back (no change)", "back"),
-                    ("Enter starting & ending balance", "edit"),
+                    ("Edit balances", "edit_bal"),
+                    ("Edit transactions", "edit_tx"),
+                    ("Transaction triage", "triage"),
+                    ("← Back", "back"),
                 ],
                 default="back",
             )
-            if edit_bal_choice == "back":
+            if edit_sub == "back":
                 continue
-            start_str = _prompt_text("Starting balance (or Enter to skip):")
-            end_str = _prompt_text("Ending balance (or Enter to skip):")
-
-            start_bal: Decimal | None = None
-            end_bal: Decimal | None = None
-            if start_str.strip():
+            if edit_sub == "triage":
+                transactions_triage = statement.get("transactions", [])
+                if not transactions_triage:
+                    continue
+                triage_sub = _prompt_select(
+                    "Transaction triage:",
+                    choices=[
+                        ("Validate transactions", "triage_validate"),
+                        ("Flag transactions", "triage_flag"),
+                        ("← Back", "back"),
+                    ],
+                    default="back",
+                )
+                if triage_sub == "back":
+                    continue
+                checkbox_choices_triage = [
+                    Choice(i, name=_tx_label(i, tx))
+                    for i, tx in enumerate(transactions_triage)
+                ]
+                if triage_sub == "triage_validate":
+                    msg = "Select transactions to mark as validated (Space to toggle, Enter to confirm):"
+                else:
+                    msg = "Select transactions to flag for edit (Space to toggle, Enter to confirm):"
                 try:
-                    start_bal = Decimal(start_str.strip().replace(",", ""))
-                except (InvalidOperation, ValueError):
-                    console.print("[yellow]Invalid starting balance — ignored[/yellow]")
-            if end_str.strip():
-                try:
-                    end_bal = Decimal(end_str.strip().replace(",", ""))
-                except (InvalidOperation, ValueError):
-                    console.print("[yellow]Invalid ending balance — ignored[/yellow]")
+                    selected_triage = inquirer.checkbox(
+                        message=msg,
+                        choices=checkbox_choices_triage,
+                    ).execute()
+                except Exception:
+                    continue
+                if selected_triage is None or len(selected_triage) == 0:
+                    continue
+                recap_lines = [_tx_label(i, transactions_triage[i]) for i in selected_triage[:10]]
+                if len(selected_triage) > 10:
+                    recap_lines.append(f"(+{len(selected_triage) - 10} more)")
+                for line in recap_lines:
+                    console.print(line)
+                if not _prompt_confirm("Confirm selection?", True):
+                    continue
+                if triage_sub == "triage_validate":
+                    triage_state["valid"] |= set(selected_triage)
+                else:
+                    triage_state["flagged"] |= set(selected_triage)
+                continue
+            if edit_sub == "edit_bal":
+                edit_bal_choice = _prompt_select(
+                    "Edit balances:",
+                    choices=[
+                        ("← Back (no change)", "back"),
+                        ("Enter starting & ending balance", "edit"),
+                    ],
+                    default="back",
+                )
+                if edit_bal_choice == "back":
+                    continue
+                start_str = _prompt_text("Starting balance (or Enter to skip):")
+                end_str = _prompt_text("Ending balance (or Enter to skip):")
 
-            result = compute_sanity(
-                statement=statement,
-                pdf_name=pdf_name,
-                extracted_count=extracted_count,
-                raw_response=raw_response,
-                validation_issues=validation_issues,
-                starting_balance=start_bal,
-                ending_balance=end_bal,
-            )
-            render_sanity_panel(console, result)
-            continue
+                start_bal: Decimal | None = None
+                end_bal: Decimal | None = None
+                if start_str.strip():
+                    try:
+                        start_bal = Decimal(start_str.strip().replace(",", ""))
+                    except (InvalidOperation, ValueError):
+                        console.print("[yellow]Invalid starting balance — ignored[/yellow]")
+                if end_str.strip():
+                    try:
+                        end_bal = Decimal(end_str.strip().replace(",", ""))
+                    except (InvalidOperation, ValueError):
+                        console.print("[yellow]Invalid ending balance — ignored[/yellow]")
 
-        if action == "edit_tx":
-            if source_path is not None and source_path.exists():
-                open_path_in_default_app(source_path)
+                result = compute_sanity(
+                    statement=statement,
+                    pdf_name=pdf_name,
+                    extracted_count=extracted_count,
+                    raw_response=raw_response,
+                    validation_issues=validation_issues,
+                    starting_balance=start_bal,
+                    ending_balance=end_bal,
+                )
+                render_sanity_panel(console, result)
+                continue
+            # edit_sub == "edit_tx"
             transactions = statement.get("transactions", [])
             if not transactions:
                 continue
@@ -580,7 +598,29 @@ def _run_sanity_stage(
             if idx is None or idx == _BACK_VALUE:
                 continue
             tx = statement["transactions"][idx]
-            # Date
+            tx_action = _prompt_select(
+                "Transaction:",
+                choices=[
+                    ("Edit fields", "edit_fields"),
+                    ("Invert sign", "invert_sign"),
+                    ("← Back", "back"),
+                ],
+                default="back",
+            )
+            if tx_action == "back":
+                continue
+            if tx_action == "invert_sign":
+                _invert_tx_sign(tx)
+                result = compute_sanity(
+                    statement=statement,
+                    pdf_name=pdf_name,
+                    extracted_count=extracted_count,
+                    raw_response=raw_response,
+                    validation_issues=validation_issues,
+                )
+                render_sanity_panel(console, result)
+                continue
+            # edit_fields
             date_default = (tx.get("posted_at") or "")[:10]
             date_str = _prompt_text("Date (YYYY-MM-DD):", default=date_default)
             if date_str.strip():
@@ -589,7 +629,6 @@ def _run_sanity_stage(
                     tx["posted_at"] = parsed_date.isoformat()
                 except ValueError:
                     console.print("[yellow]Invalid date — kept previous.[/yellow]")
-            # Amount
             amt_default = str(tx.get("amount", ""))
             amt_str = _prompt_text("Amount:", default=amt_default)
             if amt_str.strip():
@@ -599,10 +638,8 @@ def _run_sanity_stage(
                     tx["trntype"] = "CREDIT" if parsed_amt >= 0 else "DEBIT"
                 except (InvalidOperation, ValueError):
                     console.print("[yellow]Invalid amount — kept previous.[/yellow]")
-            # Name
             name_val = _prompt_text("Name:", default=tx.get("name") or "")
             tx["name"] = name_val.strip() or tx.get("name")
-            # Memo
             memo_val = _prompt_text("Memo:", default=tx.get("memo") or "")
             tx["memo"] = memo_val.strip() or tx.get("memo")
             result = compute_sanity(
