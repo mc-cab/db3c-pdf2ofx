@@ -404,6 +404,16 @@ def _run_sanity_stage(
         if action == "edit":
             if source_path is not None and source_path.exists():
                 open_path_in_default_app(source_path)
+            edit_bal_choice = _prompt_select(
+                "Edit balances:",
+                choices=[
+                    ("← Back (no change)", "back"),
+                    ("Enter starting & ending balance", "edit"),
+                ],
+                default="back",
+            )
+            if edit_bal_choice == "back":
+                continue
             start_str = _prompt_text("Starting balance (or Enter to skip):")
             end_str = _prompt_text("Ending balance (or Enter to skip):")
 
@@ -452,9 +462,9 @@ def _run_sanity_stage(
             edit_tx_action = _prompt_select(
                 "Edit transactions:",
                 choices=[
+                    ("← Back", "back"),
                     ("Remove some transactions", "remove"),
                     ("Edit one transaction (date, amount, description)", "edit_one"),
-                    ("Back", "back"),
                 ],
                 default="back",
             )
@@ -492,7 +502,10 @@ def _run_sanity_stage(
                 render_sanity_panel(console, result)
                 continue
             # edit_one
+            _BACK_VALUE = "__back__"
             select_choices = [
+                Choice(_BACK_VALUE, name="← Back"),
+            ] + [
                 Choice(i, name=_tx_label(i, tx))
                 for i, tx in enumerate(transactions)
             ]
@@ -503,7 +516,7 @@ def _run_sanity_stage(
                 ).execute()
             except Exception:
                 continue
-            if idx is None:
+            if idx is None or idx == _BACK_VALUE:
                 continue
             tx = statement["transactions"][idx]
             # Date

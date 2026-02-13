@@ -92,7 +92,7 @@ def test_sanity_stage_auto_opens_pdf_on_edit_balances(tmp_path: Path) -> None:
     source_pdf = tmp_path / "stmt.pdf"
     source_pdf.write_bytes(b"")
 
-    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "accept"]), patch(
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit", "accept"]), patch(
         "pdf2ofx.cli._prompt_text", return_value=""
     ), patch("pdf2ofx.cli.open_path_in_default_app", MagicMock()) as mock_open:
         _run_sanity_stage(
@@ -107,3 +107,42 @@ def test_sanity_stage_auto_opens_pdf_on_edit_balances(tmp_path: Path) -> None:
             recovery_mode=False,
         )
         mock_open.assert_called_once_with(source_pdf)
+
+
+def test_sanity_stage_edit_balances_back_returns_to_menu(tmp_path: Path) -> None:
+    """Edit balances → ← Back returns to SANITY menu without prompting for numbers (P0 UX)."""
+    from rich.console import Console
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "back", "accept"]):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+
+
+def test_sanity_stage_edit_tx_back_returns_to_menu(tmp_path: Path) -> None:
+    """Edit transactions → ← Back returns to SANITY menu; then Accept completes (P0 UX)."""
+    from rich.console import Console
+
+    # Main menu → edit_tx, then submenu → back, then main menu → accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit_tx", "back", "accept"]):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
