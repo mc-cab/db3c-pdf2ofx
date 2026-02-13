@@ -5,9 +5,10 @@ from unittest.mock import MagicMock, patch
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
-from pdf2ofx.cli import _run_sanity_stage, app
+from pdf2ofx.cli import RecoveryBackRequested, _run_sanity_stage, app
 
 
 def test_cli_smoke(tmp_path: Path) -> None:
@@ -134,8 +135,8 @@ def test_sanity_stage_auto_opens_pdf_on_edit_balances(tmp_path: Path) -> None:
     source_pdf = tmp_path / "stmt.pdf"
     source_pdf.write_bytes(b"")
 
-    # Main → Edit → Edit submenu edit_bal → balance submenu edit → accept
-    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit_bal", "edit", "accept"]), patch(
+    # L1 → Edit → edit_bal → balance edit → return to L2 → back → accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit_bal", "edit", "back", "accept"]), patch(
         "pdf2ofx.cli._prompt_text", return_value=""
     ), patch("pdf2ofx.cli.open_path_in_default_app", MagicMock()) as mock_open:
         _run_sanity_stage(
@@ -153,11 +154,11 @@ def test_sanity_stage_auto_opens_pdf_on_edit_balances(tmp_path: Path) -> None:
 
 
 def test_sanity_stage_edit_balances_back_returns_to_menu(tmp_path: Path) -> None:
-    """Edit → Edit balances → ← Back returns to SANITY menu without prompting for numbers (P0 UX)."""
+    """Edit → Edit balances → ← Back returns to Edit submenu (L2); second Back to L1; then Accept (P0 UX)."""
     from rich.console import Console
 
-    # Main → Edit → Edit submenu back → accept
-    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "back", "accept"]):
+    # L1 → Edit → L2 → Edit balances → Back (L2a→L2) → Back (L2→L1) → Accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit_bal", "back", "back", "accept"]):
         result = _run_sanity_stage(
             console=Console(),
             statement=_minimal_statement(),
@@ -173,11 +174,11 @@ def test_sanity_stage_edit_balances_back_returns_to_menu(tmp_path: Path) -> None
 
 
 def test_sanity_stage_edit_tx_back_returns_to_menu(tmp_path: Path) -> None:
-    """Edit → Edit transactions → ← Back returns to SANITY menu; then Accept completes (P0 UX)."""
+    """Edit → Edit transactions → ← Back returns to Edit submenu (L2); second Back to L1; then Accept (P0 UX)."""
     from rich.console import Console
 
-    # Main → Edit → edit_tx → Edit transactions submenu back → accept
-    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit_tx", "back", "accept"]):
+    # L1 → Edit → L2 → edit_tx → L2b Back (→L2) → Back (→L1) → Accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit_tx", "back", "back", "accept"]):
         result = _run_sanity_stage(
             console=Console(),
             statement=_minimal_statement(),
@@ -204,11 +205,11 @@ def test_sanity_triage_valid_then_edit_shows_only_non_valid(tmp_path: Path) -> N
         result.execute.return_value = "__back__"
         return result
 
-    # Main → Edit → triage → Validate → checkbox [0] → confirm → main → Edit → edit_tx → edit_one (inquirer returns back) → accept
+    # L1 → Edit → triage → Validate [0] → confirm → stay at L2 → edit_tx → edit_one (inquirer back) → back (L2b→L2) → back (L2→L1) → accept
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "triage", "triage_validate",
-        "edit", "edit_tx", "edit_one",
-        "accept",
+        "edit_tx", "edit_one",
+        "back", "back", "accept",
     ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0]))), patch(
         "pdf2ofx.cli._prompt_confirm", return_value=True
     ), patch("pdf2ofx.cli.inquirer.select", side_effect=mock_select):
@@ -244,11 +245,11 @@ def test_sanity_triage_flagged_then_edit_shows_only_flagged(tmp_path: Path) -> N
         result.execute.return_value = "__back__"
         return result
 
-    # Main → Edit → triage → Flag → checkbox [0, 2] → confirm → main → Edit → edit_tx → edit_one (inquirer returns back) → accept
+    # L1 → Edit → triage → Flag [0,2] → confirm → stay at L2 → edit_tx → edit_one (inquirer back) → back → back → accept
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "triage", "triage_flag",
-        "edit", "edit_tx", "edit_one",
-        "accept",
+        "edit_tx", "edit_one",
+        "back", "back", "accept",
     ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0, 2]))), patch(
         "pdf2ofx.cli._prompt_confirm", return_value=True
     ), patch("pdf2ofx.cli.inquirer.select", side_effect=mock_select):
@@ -282,12 +283,12 @@ def test_sanity_triage_flag_priority_over_valid(tmp_path: Path) -> None:
         result.execute.return_value = "__back__"
         return result
 
-    # Main → Edit → triage → Validate [0,1] → Edit → triage → Flag [1,2] → main → Edit → edit_tx → edit_one (inquirer back) → accept
+    # L1 → Edit → triage Validate [0,1] → L2 → triage Flag [1,2] → L2 → edit_tx → edit_one (inquirer back) → back → back → accept
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "triage", "triage_validate",
-        "edit", "triage", "triage_flag",
-        "edit", "edit_tx", "edit_one",
-        "accept",
+        "triage", "triage_flag",
+        "edit_tx", "edit_one",
+        "back", "back", "accept",
     ]), patch(
         "pdf2ofx.cli.inquirer.checkbox",
         side_effect=[
@@ -319,11 +320,11 @@ def test_sanity_triage_all_valid_then_edit_shows_empty_message(tmp_path: Path) -
     """When all transactions are validated, Edit transactions shows empty message and returns to menu (v0.1.3)."""
     mock_console = MagicMock()
 
-    # Main → Edit → triage → Validate [0,1,2] → confirm → main → Edit → edit_tx (empty filter) → main → accept
+    # L1 → Edit → triage Validate [0,1,2] → confirm → L2 → edit_tx (empty filter, stay L2) → back (L2→L1) → accept
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "triage", "triage_validate",
-        "edit", "edit_tx",
-        "accept",
+        "edit_tx",
+        "back", "accept",
     ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0, 1, 2]))), patch(
         "pdf2ofx.cli._prompt_confirm", return_value=True
     ):
@@ -390,12 +391,15 @@ def test_sanity_invert_sign_negates_amount(tmp_path: Path) -> None:
     from rich.console import Console
 
     stmt = _statement_one_tx_amount_100()
-    # Main → Edit → edit_tx → edit_one → select idx 0 → invert_sign → accept
+    # L1 → Edit → edit_tx → edit_one → select 0 → invert_sign → back at L3 → inquirer back → L2b back → L2 back → accept
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "edit_tx", "edit_one",
         "invert_sign",
-        "accept",
-    ]), patch("pdf2ofx.cli.inquirer.select", return_value=MagicMock(execute=MagicMock(return_value=0))):
+        "back", "back", "accept",
+    ]), patch("pdf2ofx.cli.inquirer.select", side_effect=[
+        MagicMock(execute=MagicMock(return_value=0)),
+        MagicMock(execute=MagicMock(return_value="__back__")),
+    ]):
         result = _run_sanity_stage(
             console=Console(),
             statement=stmt,
@@ -420,8 +424,11 @@ def test_sanity_invert_sign_swaps_debit_credit(tmp_path: Path) -> None:
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "edit_tx", "edit_one",
         "invert_sign",
-        "accept",
-    ]), patch("pdf2ofx.cli.inquirer.select", return_value=MagicMock(execute=MagicMock(return_value=0))):
+        "back", "back", "accept",
+    ]), patch("pdf2ofx.cli.inquirer.select", side_effect=[
+        MagicMock(execute=MagicMock(return_value=0)),
+        MagicMock(execute=MagicMock(return_value="__back__")),
+    ]):
         result = _run_sanity_stage(
             console=Console(),
             statement=stmt,
@@ -450,19 +457,17 @@ def test_sanity_triage_and_invert_sign_filter_unchanged(tmp_path: Path) -> None:
 
     def mock_select(message=None, choices=None, **kwargs):
         captured_select_choices.append(choices)
-        # First call: transaction list (filtered to index 0) → select 0
-        # Second call: after invert, we're back at main; user goes edit → edit_tx → list again → return back
+        # First call: transaction list (filtered to index 0) → select 0. Second: after invert we're back at L3 → back
         if len(captured_select_choices) == 1:
             return MagicMock(execute=MagicMock(return_value=0))
         return MagicMock(execute=MagicMock(return_value="__back__"))
 
-    # Main → Edit → triage → Flag [0] → main → Edit → edit_tx → edit_one → select 0 → invert_sign → main → Edit → edit_tx → edit_one → back
+    # L1 → Edit → triage Flag [0] → L2 → edit_tx → edit_one → select 0 → invert_sign (return to L3) → back (L3→L2b) → back (L2b→L2) → back (L2→L1) → accept
     with patch("pdf2ofx.cli._prompt_select", side_effect=[
         "edit", "triage", "triage_flag",
-        "edit", "edit_tx", "edit_one",
+        "edit_tx", "edit_one",
         "invert_sign",
-        "edit", "edit_tx", "edit_one",
-        "accept",
+        "back", "back", "accept",
     ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0]))), patch(
         "pdf2ofx.cli._prompt_confirm", return_value=True
     ), patch("pdf2ofx.cli.inquirer.select", side_effect=mock_select):
@@ -484,3 +489,184 @@ def test_sanity_triage_and_invert_sign_filter_unchanged(tmp_path: Path) -> None:
     values = [getattr(c, "value", c) for c in second_list]
     tx_values = [v for v in values if v != "__back__"]
     assert set(tx_values) == {0}
+
+
+# --- Navigation tests (hierarchical Back + return points) ---
+
+
+def test_sanity_back_from_l4_returns_to_l3(tmp_path: Path) -> None:
+    """Back from per-tx menu (L4) returns to transaction list (L3); then Back L3→L2b, L2b→L2, L2→L1, Accept."""
+    from rich.console import Console
+
+    captured: list[str] = []
+
+    def capture_prompts(msg: str, choices: list[tuple[str, str]], default: str) -> str:
+        captured.append(msg)
+        return next(_back_l4_sequence)
+
+    _back_l4_sequence = iter([
+        "edit", "edit_tx", "edit_one",
+        "back",   # L4 Back → L3 (inquirer next)
+        "back", "back", "accept",  # L2b Back, L2 Back, L1 Accept
+    ])
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=capture_prompts), patch(
+        "pdf2ofx.cli.inquirer.select",
+        side_effect=[
+            MagicMock(execute=MagicMock(return_value=0)),   # select tx (L3)
+            MagicMock(execute=MagicMock(return_value="__back__")),  # L3 Back → L2b
+        ],
+    ):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    # After L4 Back we should see L3 again (inquirer), then L2b "Edit transactions:", then L2 "Edit:", then L1 "Sanity check:"
+    assert "Edit transactions:" in captured
+    assert "Edit:" in captured
+    assert any("Sanity check" in m for m in captured)
+
+
+def test_sanity_back_from_l3_returns_to_l2b(tmp_path: Path) -> None:
+    """Back from Select transaction (L3) returns to Edit transactions menu (L2b); then Back→L2, Back→L1, Accept."""
+    from rich.console import Console
+
+    # L1 → Edit → edit_tx → edit_one → inquirer Back → L2b back → L2 back → accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "edit", "edit_tx", "edit_one",
+        "back", "back", "accept",
+    ]), patch("pdf2ofx.cli.inquirer.select", return_value=MagicMock(execute=MagicMock(return_value="__back__"))):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+
+
+def test_sanity_back_from_l2b_returns_to_l2(tmp_path: Path) -> None:
+    """Back from Edit transactions (L2b) returns to Edit submenu (L2); then Back→L1, Accept."""
+    from rich.console import Console
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=["edit", "edit_tx", "back", "back", "accept"]):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_minimal_statement(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+
+
+def test_sanity_after_invert_returns_to_l3_not_l1(tmp_path: Path) -> None:
+    """After Invert sign we return to transaction list (L3); next _prompt_select is L2b only after Back from L3."""
+    from rich.console import Console
+
+    order: list[str] = []
+
+    def track(msg: str, choices: list[tuple[str, str]], default: str) -> str:
+        order.append(msg.strip())
+        return next(_invert_return_sequence)
+
+    _invert_return_sequence = iter([
+        "edit", "edit_tx", "edit_one",
+        "invert_sign",
+        "back", "back", "accept",
+    ])
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=track), patch("pdf2ofx.cli.inquirer.select", side_effect=[
+        MagicMock(execute=MagicMock(return_value=0)),
+        MagicMock(execute=MagicMock(return_value="__back__")),
+    ]):
+        _run_sanity_stage(
+            console=Console(),
+            statement=_statement_one_tx_amount_100(),
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    # After invert we return to L3; when we Back from L3 we see L2b "Edit transactions:" before we Back to L1 "Sanity check:".
+    # So the last "Edit transactions:" must appear before the last "Sanity check:".
+    idx_edit_tx_last = max((i for i, m in enumerate(order) if m == "Edit transactions:"), default=None)
+    idx_sanity_last = max((i for i, m in enumerate(order) if "Sanity check" in m), default=None)
+    assert idx_edit_tx_last is not None and idx_sanity_last is not None
+    assert idx_edit_tx_last < idx_sanity_last
+
+
+def test_sanity_after_triage_confirm_returns_to_l2_not_l1(tmp_path: Path) -> None:
+    """After triage Validate/Flag confirm we return to Edit submenu (L2); next prompt is Edit: with edit_tx/edit_bal/triage/back."""
+    from rich.console import Console
+
+    edit_prompts: list[tuple[str, list[tuple[str, str]]]] = []
+
+    def capture_edit_prompts(msg: str, choices: list[tuple[str, str]], default: str) -> str:
+        if msg.strip() == "Edit:":
+            edit_prompts.append((msg, list(choices)))
+        return next(_triage_return_sequence)
+
+    _triage_return_sequence = iter([
+        "edit", "triage", "triage_validate",
+        "edit_tx", "back", "back", "accept",
+    ])
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=capture_edit_prompts), patch(
+        "pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0]))
+    ), patch("pdf2ofx.cli._prompt_confirm", return_value=True):
+        _run_sanity_stage(
+            console=Console(),
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    # First "Edit:" when we enter L2; second "Edit:" after triage confirm (return to L2, not L1).
+    assert len(edit_prompts) >= 2
+    _, choices_after_triage = edit_prompts[1]
+    values = [v for _, v in choices_after_triage]
+    assert "edit_tx" in values and "back" in values
+
+
+def test_sanity_recovery_back_to_list_exits_sanity(tmp_path: Path) -> None:
+    """In recovery_mode, choosing Back to list at L1 raises RecoveryBackRequested (exit SANITY to list)."""
+    from rich.console import Console
+
+    with patch("pdf2ofx.cli._prompt_select", return_value="back_to_list"):
+        with pytest.raises(RecoveryBackRequested):
+            _run_sanity_stage(
+                console=Console(),
+                statement=_minimal_statement(),
+                pdf_name="stmt.pdf",
+                extracted_count=1,
+                raw_response=None,
+                validation_issues=[],
+                dev_non_interactive=False,
+                source_path=None,
+                recovery_mode=True,
+            )

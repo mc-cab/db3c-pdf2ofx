@@ -427,230 +427,251 @@ def _run_sanity_stage(
         if action == "edit":
             if source_path is not None and source_path.exists():
                 open_path_in_default_app(source_path)
-            edit_sub = _prompt_select(
-                "Edit:",
-                choices=[
-                    ("Edit balances", "edit_bal"),
-                    ("Edit transactions", "edit_tx"),
-                    ("Transaction triage", "triage"),
-                    ("← Back", "back"),
-                ],
-                default="back",
-            )
-            if edit_sub == "back":
-                continue
-            if edit_sub == "triage":
-                transactions_triage = statement.get("transactions", [])
-                if not transactions_triage:
-                    continue
-                triage_sub = _prompt_select(
-                    "Transaction triage:",
+            while True:  # L2 — Edit submenu
+                edit_sub = _prompt_select(
+                    "Edit:",
                     choices=[
-                        ("Validate transactions", "triage_validate"),
-                        ("Flag transactions", "triage_flag"),
+                        ("Edit balances", "edit_bal"),
+                        ("Edit transactions", "edit_tx"),
+                        ("Transaction triage", "triage"),
                         ("← Back", "back"),
                     ],
                     default="back",
                 )
-                if triage_sub == "back":
-                    continue
-                checkbox_choices_triage = [
-                    Choice(i, name=_tx_label(i, tx))
-                    for i, tx in enumerate(transactions_triage)
-                ]
-                if triage_sub == "triage_validate":
-                    msg = "Select transactions to mark as validated (Space to toggle, Enter to confirm):"
-                else:
-                    msg = "Select transactions to flag for edit (Space to toggle, Enter to confirm):"
-                try:
-                    selected_triage = inquirer.checkbox(
-                        message=msg,
-                        choices=checkbox_choices_triage,
-                    ).execute()
-                except Exception:
-                    continue
-                if selected_triage is None or len(selected_triage) == 0:
-                    continue
-                recap_lines = [_tx_label(i, transactions_triage[i]) for i in selected_triage[:10]]
-                if len(selected_triage) > 10:
-                    recap_lines.append(f"(+{len(selected_triage) - 10} more)")
-                for line in recap_lines:
-                    console.print(line)
-                if not _prompt_confirm("Confirm selection?", True):
-                    continue
-                if triage_sub == "triage_validate":
-                    triage_state["valid"] |= set(selected_triage)
-                else:
-                    triage_state["flagged"] |= set(selected_triage)
-                continue
-            if edit_sub == "edit_bal":
-                edit_bal_choice = _prompt_select(
-                    "Edit balances:",
-                    choices=[
-                        ("← Back (no change)", "back"),
-                        ("Enter starting & ending balance", "edit"),
-                    ],
-                    default="back",
-                )
-                if edit_bal_choice == "back":
-                    continue
-                start_str = _prompt_text("Starting balance (or Enter to skip):")
-                end_str = _prompt_text("Ending balance (or Enter to skip):")
-
-                start_bal: Decimal | None = None
-                end_bal: Decimal | None = None
-                if start_str.strip():
-                    try:
-                        start_bal = Decimal(start_str.strip().replace(",", ""))
-                    except (InvalidOperation, ValueError):
-                        console.print("[yellow]Invalid starting balance — ignored[/yellow]")
-                if end_str.strip():
-                    try:
-                        end_bal = Decimal(end_str.strip().replace(",", ""))
-                    except (InvalidOperation, ValueError):
-                        console.print("[yellow]Invalid ending balance — ignored[/yellow]")
-
-                result = compute_sanity(
-                    statement=statement,
-                    pdf_name=pdf_name,
-                    extracted_count=extracted_count,
-                    raw_response=raw_response,
-                    validation_issues=validation_issues,
-                    starting_balance=start_bal,
-                    ending_balance=end_bal,
-                )
-                render_sanity_panel(console, result)
-                continue
-            # edit_sub == "edit_tx"
-            transactions = statement.get("transactions", [])
-            if not transactions:
-                continue
-            if triage_state["flagged"]:
-                filtered_indices = sorted(triage_state["flagged"])
-            elif triage_state["valid"]:
-                filtered_indices = [
-                    i for i in range(len(transactions))
-                    if i not in triage_state["valid"]
-                ]
-            else:
-                filtered_indices = list(range(len(transactions)))
-            if not filtered_indices:
-                console.print("No transactions match current triage filter.")
-                continue
-
-            edit_tx_action = _prompt_select(
-                "Edit transactions:",
-                choices=[
-                    ("← Back", "back"),
-                    ("Remove some transactions", "remove"),
-                    ("Edit one transaction (date, amount, description)", "edit_one"),
-                ],
-                default="back",
-            )
-            if edit_tx_action == "back":
-                continue
-            if edit_tx_action == "remove":
-                checkbox_choices = [
-                    Choice(i, name=_tx_label(i, transactions[i]))
-                    for i in filtered_indices
-                ]
-                to_remove = inquirer.checkbox(
-                    message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
-                    choices=checkbox_choices,
-                ).execute()
-                if to_remove is None:
-                    continue
-                if len(to_remove) == 0:
-                    continue
-                if len(to_remove) >= len(transactions):
-                    console.print(
-                        "[yellow]At least one transaction must remain.[/yellow]"
+                if edit_sub == "back":
+                    break
+                if edit_sub == "triage":
+                    transactions_triage = statement.get("transactions", [])
+                    if not transactions_triage:
+                        continue
+                    triage_sub = _prompt_select(
+                        "Transaction triage:",
+                        choices=[
+                            ("Validate transactions", "triage_validate"),
+                            ("Flag transactions", "triage_flag"),
+                            ("← Back", "back"),
+                        ],
+                        default="back",
                     )
+                    if triage_sub == "back":
+                        continue
+                    checkbox_choices_triage = [
+                        Choice(i, name=_tx_label(i, tx))
+                        for i, tx in enumerate(transactions_triage)
+                    ]
+                    if triage_sub == "triage_validate":
+                        msg = "Select transactions to mark as validated (Space to toggle, Enter to confirm):"
+                    else:
+                        msg = "Select transactions to flag for edit (Space to toggle, Enter to confirm):"
+                    try:
+                        selected_triage = inquirer.checkbox(
+                            message=msg,
+                            choices=checkbox_choices_triage,
+                        ).execute()
+                    except Exception:
+                        continue
+                    if selected_triage is None or len(selected_triage) == 0:
+                        continue
+                    recap_lines = [_tx_label(i, transactions_triage[i]) for i in selected_triage[:10]]
+                    if len(selected_triage) > 10:
+                        recap_lines.append(f"(+{len(selected_triage) - 10} more)")
+                    for line in recap_lines:
+                        console.print(line)
+                    if not _prompt_confirm("Confirm selection?", True):
+                        continue
+                    if triage_sub == "triage_validate":
+                        triage_state["valid"] |= set(selected_triage)
+                    else:
+                        triage_state["flagged"] |= set(selected_triage)
                     continue
-                to_remove_set = set(to_remove)
-                statement["transactions"] = [
-                    t for i, t in enumerate(transactions) if i not in to_remove_set
-                ]
-                result = compute_sanity(
-                    statement=statement,
-                    pdf_name=pdf_name,
-                    extracted_count=extracted_count,
-                    raw_response=raw_response,
-                    validation_issues=validation_issues,
-                )
-                render_sanity_panel(console, result)
-                continue
-            # edit_one
-            _BACK_VALUE = "__back__"
-            select_choices = [
-                Choice(_BACK_VALUE, name="← Back"),
-            ] + [
-                Choice(i, name=_tx_label(i, transactions[i]))
-                for i in filtered_indices
-            ]
-            try:
-                idx = inquirer.select(
-                    message="Select transaction to edit:",
-                    choices=select_choices,
-                ).execute()
-            except Exception:
-                continue
-            if idx is None or idx == _BACK_VALUE:
-                continue
-            tx = statement["transactions"][idx]
-            tx_action = _prompt_select(
-                "Transaction:",
-                choices=[
-                    ("Edit fields", "edit_fields"),
-                    ("Invert sign", "invert_sign"),
-                    ("← Back", "back"),
-                ],
-                default="back",
-            )
-            if tx_action == "back":
-                continue
-            if tx_action == "invert_sign":
-                _invert_tx_sign(tx)
-                result = compute_sanity(
-                    statement=statement,
-                    pdf_name=pdf_name,
-                    extracted_count=extracted_count,
-                    raw_response=raw_response,
-                    validation_issues=validation_issues,
-                )
-                render_sanity_panel(console, result)
-                continue
-            # edit_fields
-            date_default = (tx.get("posted_at") or "")[:10]
-            date_str = _prompt_text("Date (YYYY-MM-DD):", default=date_default)
-            if date_str.strip():
-                try:
-                    parsed_date = date.fromisoformat(date_str.strip())
-                    tx["posted_at"] = parsed_date.isoformat()
-                except ValueError:
-                    console.print("[yellow]Invalid date — kept previous.[/yellow]")
-            amt_default = str(tx.get("amount", ""))
-            amt_str = _prompt_text("Amount:", default=amt_default)
-            if amt_str.strip():
-                try:
-                    parsed_amt = Decimal(amt_str.strip().replace(",", ""))
-                    tx["amount"] = parsed_amt
-                    tx["trntype"] = "CREDIT" if parsed_amt >= 0 else "DEBIT"
-                except (InvalidOperation, ValueError):
-                    console.print("[yellow]Invalid amount — kept previous.[/yellow]")
-            name_val = _prompt_text("Name:", default=tx.get("name") or "")
-            tx["name"] = name_val.strip() or tx.get("name")
-            memo_val = _prompt_text("Memo:", default=tx.get("memo") or "")
-            tx["memo"] = memo_val.strip() or tx.get("memo")
-            result = compute_sanity(
-                statement=statement,
-                pdf_name=pdf_name,
-                extracted_count=extracted_count,
-                raw_response=raw_response,
-                validation_issues=validation_issues,
-            )
-            render_sanity_panel(console, result)
-            continue
+                if edit_sub == "edit_bal":
+                    edit_bal_choice = _prompt_select(
+                        "Edit balances:",
+                        choices=[
+                            ("← Back (no change)", "back"),
+                            ("Enter starting & ending balance", "edit"),
+                        ],
+                        default="back",
+                    )
+                    if edit_bal_choice == "back":
+                        continue
+                    start_str = _prompt_text("Starting balance (or Enter to skip):")
+                    end_str = _prompt_text("Ending balance (or Enter to skip):")
+
+                    start_bal: Decimal | None = None
+                    end_bal: Decimal | None = None
+                    if start_str.strip():
+                        try:
+                            start_bal = Decimal(start_str.strip().replace(",", ""))
+                        except (InvalidOperation, ValueError):
+                            console.print("[yellow]Invalid starting balance — ignored[/yellow]")
+                    if end_str.strip():
+                        try:
+                            end_bal = Decimal(end_str.strip().replace(",", ""))
+                        except (InvalidOperation, ValueError):
+                            console.print("[yellow]Invalid ending balance — ignored[/yellow]")
+
+                    result = compute_sanity(
+                        statement=statement,
+                        pdf_name=pdf_name,
+                        extracted_count=extracted_count,
+                        raw_response=raw_response,
+                        validation_issues=validation_issues,
+                        starting_balance=start_bal,
+                        ending_balance=end_bal,
+                    )
+                    render_sanity_panel(console, result)
+                    continue
+                # edit_sub == "edit_tx" — L2b
+                transactions = statement.get("transactions", [])
+                if not transactions:
+                    continue
+                if triage_state["flagged"]:
+                    filtered_indices = sorted(triage_state["flagged"])
+                elif triage_state["valid"]:
+                    filtered_indices = [
+                        i for i in range(len(transactions))
+                        if i not in triage_state["valid"]
+                    ]
+                else:
+                    filtered_indices = list(range(len(transactions)))
+                if not filtered_indices:
+                    console.print("No transactions match current triage filter.")
+                    continue
+
+                while True:  # L2b — Edit transactions menu
+                    transactions = statement.get("transactions", [])
+                    if not transactions:
+                        break
+                    if triage_state["flagged"]:
+                        filtered_indices = sorted(triage_state["flagged"])
+                    elif triage_state["valid"]:
+                        filtered_indices = [
+                            i for i in range(len(transactions))
+                            if i not in triage_state["valid"]
+                        ]
+                    else:
+                        filtered_indices = list(range(len(transactions)))
+                    if not filtered_indices:
+                        console.print("No transactions match current triage filter.")
+                        break
+
+                    edit_tx_action = _prompt_select(
+                        "Edit transactions:",
+                        choices=[
+                            ("← Back", "back"),
+                            ("Remove some transactions", "remove"),
+                            ("Edit one transaction (date, amount, description)", "edit_one"),
+                        ],
+                        default="back",
+                    )
+                    if edit_tx_action == "back":
+                        break
+                    if edit_tx_action == "remove":
+                        checkbox_choices = [
+                            Choice(i, name=_tx_label(i, transactions[i]))
+                            for i in filtered_indices
+                        ]
+                        to_remove = inquirer.checkbox(
+                            message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
+                            choices=checkbox_choices,
+                        ).execute()
+                        if to_remove is None:
+                            continue
+                        if len(to_remove) == 0:
+                            continue
+                        if len(to_remove) >= len(transactions):
+                            console.print(
+                                "[yellow]At least one transaction must remain.[/yellow]"
+                            )
+                            continue
+                        to_remove_set = set(to_remove)
+                        statement["transactions"] = [
+                            t for i, t in enumerate(transactions) if i not in to_remove_set
+                        ]
+                        result = compute_sanity(
+                            statement=statement,
+                            pdf_name=pdf_name,
+                            extracted_count=extracted_count,
+                            raw_response=raw_response,
+                            validation_issues=validation_issues,
+                        )
+                        render_sanity_panel(console, result)
+                        continue
+                    # edit_one — L3
+                    _BACK_VALUE = "__back__"
+                    while True:  # L3 — Select transaction to edit
+                        select_choices = [
+                            Choice(_BACK_VALUE, name="← Back"),
+                        ] + [
+                            Choice(i, name=_tx_label(i, statement["transactions"][i]))
+                            for i in filtered_indices
+                        ]
+                        try:
+                            idx = inquirer.select(
+                                message="Select transaction to edit:",
+                                choices=select_choices,
+                            ).execute()
+                        except Exception:
+                            break
+                        if idx is None or idx == _BACK_VALUE:
+                            break
+                        tx = statement["transactions"][idx]
+                        tx_action = _prompt_select(
+                            "Transaction:",
+                            choices=[
+                                ("Edit fields", "edit_fields"),
+                                ("Invert sign", "invert_sign"),
+                                ("← Back", "back"),
+                            ],
+                            default="back",
+                        )
+                        if tx_action == "back":
+                            continue
+                        if tx_action == "invert_sign":
+                            _invert_tx_sign(tx)
+                            result = compute_sanity(
+                                statement=statement,
+                                pdf_name=pdf_name,
+                                extracted_count=extracted_count,
+                                raw_response=raw_response,
+                                validation_issues=validation_issues,
+                            )
+                            render_sanity_panel(console, result)
+                            continue
+                        # edit_fields
+                        date_default = (tx.get("posted_at") or "")[:10]
+                        date_str = _prompt_text("Date (YYYY-MM-DD):", default=date_default)
+                        if date_str.strip():
+                            try:
+                                parsed_date = date.fromisoformat(date_str.strip())
+                                tx["posted_at"] = parsed_date.isoformat()
+                            except ValueError:
+                                console.print("[yellow]Invalid date — kept previous.[/yellow]")
+                        amt_default = str(tx.get("amount", ""))
+                        amt_str = _prompt_text("Amount:", default=amt_default)
+                        if amt_str.strip():
+                            try:
+                                parsed_amt = Decimal(amt_str.strip().replace(",", ""))
+                                tx["amount"] = parsed_amt
+                                tx["trntype"] = "CREDIT" if parsed_amt >= 0 else "DEBIT"
+                            except (InvalidOperation, ValueError):
+                                console.print("[yellow]Invalid amount — kept previous.[/yellow]")
+                        name_val = _prompt_text("Name:", default=tx.get("name") or "")
+                        tx["name"] = name_val.strip() or tx.get("name")
+                        memo_val = _prompt_text("Memo:", default=tx.get("memo") or "")
+                        tx["memo"] = memo_val.strip() or tx.get("memo")
+                        result = compute_sanity(
+                            statement=statement,
+                            pdf_name=pdf_name,
+                            extracted_count=extracted_count,
+                            raw_response=raw_response,
+                            validation_issues=validation_issues,
+                        )
+                        render_sanity_panel(console, result)
+                        continue
+                continue  # after L2b exit, show L2 again
+            continue  # after L2 exit, show L1 again
 
         # action == "accept"
         if result.reconciliation_status == "ERROR":
