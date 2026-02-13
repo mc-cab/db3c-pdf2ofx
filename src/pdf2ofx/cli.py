@@ -434,12 +434,60 @@ def _run_sanity_stage(
                         ("Edit balances", "edit_bal"),
                         ("Edit transactions", "edit_tx"),
                         ("Transaction triage", "triage"),
+                        ("Invert transaction sign(s)", "invert_sign_batch"),
                         ("← Back", "back"),
                     ],
                     default="back",
                 )
                 if edit_sub == "back":
                     break
+                if edit_sub == "invert_sign_batch":
+                    transactions_batch = statement.get("transactions", [])
+                    if not transactions_batch:
+                        continue
+                    if triage_state["flagged"]:
+                        filtered_indices_batch = sorted(triage_state["flagged"])
+                    elif triage_state["valid"]:
+                        filtered_indices_batch = [
+                            i for i in range(len(transactions_batch))
+                            if i not in triage_state["valid"]
+                        ]
+                    else:
+                        filtered_indices_batch = list(range(len(transactions_batch)))
+                    if not filtered_indices_batch:
+                        console.print("No transactions match current triage filter.")
+                        continue
+                    checkbox_choices_batch = [
+                        Choice(i, name=_tx_label(i, transactions_batch[i]))
+                        for i in filtered_indices_batch
+                    ]
+                    try:
+                        selected_batch = inquirer.checkbox(
+                            message="Select transactions to invert sign (Space to toggle, Enter to confirm):",
+                            choices=checkbox_choices_batch,
+                        ).execute()
+                    except Exception:
+                        continue
+                    if selected_batch is None or len(selected_batch) == 0:
+                        continue
+                    recap_lines = [_tx_label(i, transactions_batch[i]) for i in selected_batch[:10]]
+                    if len(selected_batch) > 10:
+                        recap_lines.append(f"(+{len(selected_batch) - 10} more)")
+                    for line in recap_lines:
+                        console.print(line)
+                    if not _prompt_confirm("Confirm selection?", True):
+                        continue
+                    for i in selected_batch:
+                        _invert_tx_sign(statement["transactions"][i])
+                    result = compute_sanity(
+                        statement=statement,
+                        pdf_name=pdf_name,
+                        extracted_count=extracted_count,
+                        raw_response=raw_response,
+                        validation_issues=validation_issues,
+                    )
+                    render_sanity_panel(console, result)
+                    continue
                 if edit_sub == "triage":
                     transactions_triage = statement.get("transactions", [])
                     if not transactions_triage:

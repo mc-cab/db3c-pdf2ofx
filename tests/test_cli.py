@@ -491,6 +491,146 @@ def test_sanity_triage_and_invert_sign_filter_unchanged(tmp_path: Path) -> None:
     assert set(tx_values) == {0}
 
 
+# --- Batch invert sign (v0.1.5) ---
+
+
+def test_sanity_batch_invert_negates_multiple_tx(tmp_path: Path) -> None:
+    """Edit → Invert transaction sign(s) → select multiple tx → confirm: amounts negated (v0.1.5)."""
+    from rich.console import Console
+
+    stmt = _statement_with_three_tx()
+    # L1 → Edit → invert_sign_batch → checkbox [0, 2] → confirm → L2 → back → accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "edit", "invert_sign_batch",
+        "back", "accept",
+    ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0, 2]))), patch(
+        "pdf2ofx.cli._prompt_confirm", return_value=True
+    ):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=stmt,
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    # Tx0 was -10 DEBIT → +10 CREDIT; Tx2 was -25 DEBIT → +25 CREDIT
+    assert stmt["transactions"][0]["amount"] == Decimal("10.00")
+    assert stmt["transactions"][0]["trntype"] == "CREDIT"
+    assert stmt["transactions"][2]["amount"] == Decimal("25.00")
+    assert stmt["transactions"][2]["trntype"] == "CREDIT"
+    # Tx1 unchanged (may still be string in statement)
+    assert Decimal(str(stmt["transactions"][1]["amount"])) == Decimal("50.00")
+
+
+def test_sanity_batch_invert_swaps_debit_credit(tmp_path: Path) -> None:
+    """Batch invert swaps debit/credit fields correctly (v0.1.5)."""
+    from rich.console import Console
+
+    stmt = _statement_one_tx_debit_credit()
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "edit", "invert_sign_batch",
+        "back", "accept",
+    ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0]))), patch(
+        "pdf2ofx.cli._prompt_confirm", return_value=True
+    ):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=stmt,
+            pdf_name="stmt.pdf",
+            extracted_count=1,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    tx = stmt["transactions"][0]
+    assert tx["amount"] == Decimal("10.00")
+    assert tx["trntype"] == "CREDIT"
+    assert tx["debit"] is None
+    assert tx["credit"] == "10.00"
+
+
+def test_sanity_batch_invert_respects_triage_filter(tmp_path: Path) -> None:
+    """Batch invert shows only triage-filtered transactions (e.g. flagged only) (v0.1.5)."""
+    from rich.console import Console
+
+    captured_choices: list[list] = []
+
+    def capture_checkbox(message=None, choices=None, **kwargs):
+        captured_choices.append(choices)
+        # First call: triage flag → return [0, 2]. Second: batch invert → return [] (no mutate).
+        if len(captured_choices) == 1:
+            return MagicMock(execute=MagicMock(return_value=[0, 2]))
+        return MagicMock(execute=MagicMock(return_value=[]))
+
+    # L1 → Edit → triage Flag [0, 2] → L2 → invert_sign_batch (checkbox shows only 0, 2)
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "edit", "triage", "triage_flag",
+        "invert_sign_batch",
+        "back", "accept",
+    ]), patch("pdf2ofx.cli.inquirer.checkbox", side_effect=capture_checkbox), patch(
+        "pdf2ofx.cli._prompt_confirm", return_value=True
+    ):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    # Second checkbox call is batch invert (first was triage flag)
+    assert len(captured_choices) >= 2
+    batch_choices = captured_choices[1]
+    values = [getattr(c, "value", c) for c in batch_choices]
+    assert set(values) == {0, 2}
+
+
+def test_sanity_batch_invert_returns_to_l2(tmp_path: Path) -> None:
+    """After batch invert, next prompt is L2 (Edit submenu), not L1 (v0.1.5)."""
+    from rich.console import Console
+
+    edit_prompts: list[str] = []
+
+    def capture_edit(msg: str, choices: list[tuple[str, str]], default: str) -> str:
+        if msg.strip() == "Edit:":
+            edit_prompts.append(msg)
+        return next(_batch_return_seq)
+
+    _batch_return_seq = iter([
+        "edit", "invert_sign_batch",
+        "back", "accept",
+    ])
+
+    with patch("pdf2ofx.cli._prompt_select", side_effect=capture_edit), patch(
+        "pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0]))
+    ), patch("pdf2ofx.cli._prompt_confirm", return_value=True):
+        _run_sanity_stage(
+            console=Console(),
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    # First Edit: when entering L2; second Edit: after batch invert (return to L2)
+    assert len(edit_prompts) >= 2
+
+
 # --- Navigation tests (hierarchical Back + return points) ---
 
 

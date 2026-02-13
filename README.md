@@ -61,6 +61,8 @@ If you have `tmp/*.json` from a previous run, you can re-run the SANITY review a
 
 **v0.1.4 –** SANITY UX refactor + fast sign inversion for OCR debit/credit errors.
 
+**v0.1.5 –** Batch invert sign at L2 (Edit submenu): multi-select transactions to invert, respects triage filter; return to L2 after apply.
+
 ### Run without Mindee (dev mode)
 
 ```bash
