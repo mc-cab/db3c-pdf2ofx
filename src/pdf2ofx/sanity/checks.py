@@ -30,12 +30,13 @@ class SanityResult:
     ending_balance: Decimal | None
     reconciled_end: Decimal | None
     delta: Decimal | None
-    reconciliation_status: str          # OK | WARNING | ERROR | SKIPPED
+    reconciliation_status: str          # OK | WARNING | ERROR | SKIPPED | N_A
     quality_score: int
-    quality_label: str                  # GOOD | DEGRADED | POOR
+    quality_label: str                  # GOOD | DEGRADED | POOR | N_A
     warnings: list[str] = field(default_factory=list)
     deductions: list[tuple[str, int]] = field(default_factory=list)
     skipped: bool = False
+    forced_accept: bool = False        # True when operator force-accepted on ERROR
 
 
 # ---------------------------------------------------------------------------
@@ -280,3 +281,33 @@ def compute_sanity(
         deductions=deductions,
         skipped=False,
     )
+
+
+def is_clean_for_tmp_delete(result: SanityResult) -> bool:
+    """True iff tmp file can be safely deleted (deterministic rule).
+
+    Delete only when: reconciliation_status == OK, quality_label == GOOD,
+    not skipped, not forced_accept. N_A or any other value = keep.
+    """
+    if result.reconciliation_status != "OK" or result.quality_label != "GOOD":
+        return False
+    if result.skipped or result.forced_accept:
+        return False
+    return True
+
+
+def tmp_keep_reason(result: SanityResult) -> str:
+    """Return a short reason string when file must be kept (for reporting)."""
+    if result.forced_accept:
+        return "forced accept on ERROR"
+    if result.skipped:
+        return "reconciliation skipped"
+    if result.reconciliation_status == "N_A":
+        return "SANITY absent (N_A)"
+    if result.reconciliation_status != "OK":
+        return f"reconciliation {result.reconciliation_status}"
+    if result.quality_label == "N_A":
+        return "SANITY absent (N_A)"
+    if result.quality_label != "GOOD":
+        return f"quality {result.quality_label}"
+    return ""

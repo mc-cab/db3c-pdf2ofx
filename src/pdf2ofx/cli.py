@@ -21,13 +21,16 @@ from pdf2ofx.handlers.mindee_handler import infer_pdf
 from pdf2ofx.helpers.errors import Stage, StageError
 from pdf2ofx.helpers.fs import (
     ensure_dirs,
+    ensure_recovery_dir,
     list_pdfs,
+    list_tmp_jsons,
     load_local_settings,
     normalize_ofx_filename,
     open_path_in_default_app,
     safe_delete_dir,
     safe_write_bytes,
     save_local_settings,
+    selective_tmp_cleanup,
     timestamp_slug,
     tmp_json_path,
     transaction_line_numbers,
@@ -37,7 +40,12 @@ from pdf2ofx.helpers.reporting import Issue, Severity
 from pdf2ofx.helpers.timing import Timer
 from pdf2ofx.helpers.ui import PdfResult, render_banner, render_summary
 from pdf2ofx.normalizers.canonicalize import NormalizationError, canonicalize_mindee
-from pdf2ofx.sanity.checks import SanityResult, compute_sanity
+from pdf2ofx.sanity.checks import (
+    SanityResult,
+    compute_sanity,
+    is_clean_for_tmp_delete,
+    tmp_keep_reason,
+)
 from pdf2ofx.sanity.panel import render_sanity_panel
 from pdf2ofx.normalizers.fitid import assign_fitids
 from pdf2ofx.validators.contract_validator import ValidationError, validate_statement
@@ -65,10 +73,25 @@ class UserAbort(Exception):
     pass
 
 
+class RecoveryBackRequested(Exception):
+    """Raised when operator chooses 'Back to list' from SANITY in recovery mode."""
+
+
 @dataclass
 class ProcessItem:
     name: str
     statement: dict
+
+
+@dataclass
+class RecoveryCandidate:
+    """In-memory recovery candidate: raw + canonical + validation + sanity (reuse unless edited)."""
+    path: Path
+    raw: dict
+    statement: dict
+    validation_issues: list
+    sanity_result: SanityResult
+    label: str  # hash + period + count + quality; stem if available
 
 
 def _prompt_select(message: str, choices: list[tuple[str, str]], default: str) -> str:
@@ -318,11 +341,13 @@ def _run_sanity_stage(
     validation_issues: list,
     dev_non_interactive: bool,
     source_path: Path | None = None,
+    recovery_mode: bool = False,
 ) -> SanityResult:
     """Run the SANITY stage: compute, display, confirm.
 
     Returns the final SanityResult after operator confirmation.
-    Does **not** mutate *statement*.
+    Does **not** mutate *statement* (caller may mutate after).
+    When recovery_mode=True, "Back to list" raises RecoveryBackRequested.
     """
     result = compute_sanity(
         statement=statement,
@@ -345,11 +370,16 @@ def _run_sanity_stage(
         ]
         if source_path is not None and source_path.exists():
             choices.append(("Open source PDF", "open"))
+        if recovery_mode:
+            choices.append(("Back to list", "back_to_list"))
         action = _prompt_select(
             "Sanity check:",
             choices=choices,
             default="accept",
         )
+
+        if action == "back_to_list":
+            raise RecoveryBackRequested()
 
         if action == "open":
             open_path_in_default_app(source_path)
@@ -510,7 +540,228 @@ def _run_sanity_stage(
             )
             if not force:
                 continue
+            result.forced_accept = True
         return result
+
+
+def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bool = False) -> None:
+    """Recovery mode: list tmp/*.json, multi-select, SANITY, then convert from .canonical.json."""
+    if dev_non_interactive:
+        console.print(
+            "[yellow]Recovery mode requires interactive prompts. Run without --dev-non-interactive.[/yellow]"
+        )
+        return
+    paths = ensure_dirs(base_dir)
+    tmp_dir = paths["tmp"]
+    output_dir = paths["output"]
+    recovery_dir = ensure_recovery_dir(tmp_dir)
+    settings_path = base_dir / "local_settings.json"
+    settings = load_local_settings(settings_path)
+    settings["settings_path"] = settings_path
+    account_defaults = _resolve_account_defaults(settings)
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / ".write_check").write_text("", encoding="utf-8")
+        (output_dir / ".write_check").unlink()
+    except OSError as e:
+        console.print(f"[red]Output dir not writable: {output_dir}[/red] — {e}")
+        return
+
+    candidates_paths = list_tmp_jsons(tmp_dir)
+    if not candidates_paths:
+        console.print("No tmp/*.json found. Exiting.")
+        return
+
+    recovery_candidates: list[RecoveryCandidate] = []
+    for path in candidates_paths:
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        try:
+            norm = canonicalize_mindee(raw, account_defaults=account_defaults)
+            statement = norm.statement
+        except NormalizationError:
+            continue
+        statement, _ = _ensure_account_id(statement, settings, allow_prompt=False)
+        assign_fitids(statement["account"]["account_id"], statement["transactions"])
+        try:
+            validation = validate_statement(statement)
+            statement = validation.statement
+        except ValidationError:
+            continue
+        if not statement.get("transactions"):
+            continue
+        extracted = len(statement.get("transactions", []))
+        sanity_result = compute_sanity(
+            statement=statement,
+            pdf_name=path.name,
+            extracted_count=extracted,
+            raw_response=raw,
+            validation_issues=validation.issues,
+        )
+        period = statement.get("period") or {}
+        start = period.get("start_date") or "?"
+        end = period.get("end_date") or "?"
+        period_str = f"{start} → {end}"
+        label = f"{path.stem}  {period_str}  {extracted} tx  {sanity_result.quality_label} ({sanity_result.quality_score})"
+        recovery_candidates.append(
+            RecoveryCandidate(
+                path=path,
+                raw=raw,
+                statement=statement,
+                validation_issues=validation.issues,
+                sanity_result=sanity_result,
+                label=label,
+            )
+        )
+
+    if not recovery_candidates:
+        console.print("No valid recovery candidates (normalize/validate failed). Exiting.")
+        return
+
+    choice_labels = [c.label for c in recovery_candidates]
+    selected_indices: list[int] = []
+    selected: list[RecoveryCandidate] = []
+
+    while True:
+        try:
+            selected_indices = inquirer.checkbox(
+                message="Select JSONs to recover (Space to toggle, Enter to confirm):",
+                choices=[Choice(i, name=choice_labels[i]) for i in range(len(recovery_candidates))],
+            ).execute()
+        except Exception:
+            return
+        if not selected_indices:
+            console.print("None selected. Exiting.")
+            return
+
+        selected = [recovery_candidates[i] for i in selected_indices]
+        for c in selected:
+            raw_path = recovery_dir / f"recover_{c.path.stem}.raw.json"
+            canon_path = recovery_dir / f"recover_{c.path.stem}.canonical.json"
+            write_json(raw_path, c.raw)
+            write_json(canon_path, c.statement)
+
+        modified: set[str] = set()
+        while True:
+            back_to_list = False
+            for c in selected:
+                canon_path = recovery_dir / f"recover_{c.path.stem}.canonical.json"
+                statement = json.loads(canon_path.read_text(encoding="utf-8"))
+                extracted = len(statement.get("transactions", []))
+                try:
+                    sanity_result = _run_sanity_stage(
+                        console=console,
+                        statement=statement,
+                        pdf_name=c.path.name,
+                        extracted_count=extracted,
+                        raw_response=c.raw,
+                        validation_issues=c.validation_issues,
+                        dev_non_interactive=False,
+                        source_path=None,
+                        recovery_mode=True,
+                    )
+                    write_json(canon_path, statement)
+                    modified.add(c.path.stem)
+                    c.statement = statement
+                    c.sanity_result = sanity_result
+                except RecoveryBackRequested:
+                    back_to_list = True
+                    break
+            if back_to_list:
+                break
+            choice = _prompt_select(
+                "Recovery: next step",
+                choices=[
+                    ("Confirm & proceed to conversion", "confirm"),
+                    ("Go back (re-run SANITY for modified)", "go_back"),
+                ],
+                default="confirm",
+            )
+            if choice == "confirm":
+                break
+            selected = [c for c in selected if c.path.stem in modified]
+            if not selected:
+                console.print("No modified items. Proceeding to conversion.")
+                selected = [recovery_candidates[i] for i in selected_indices]
+                break
+        if not back_to_list:
+            break
+
+    output_mode = _prompt_select(
+        "Output mode",
+        choices=[("A) One OFX per file", "A"), ("B) Concatenate", "B")],
+        default="A",
+    )
+    output_format = _prompt_select(
+        "Output format",
+        choices=[("OFX2 (XML)", "OFX2"), ("OFX1 (fallback)", "OFX1")],
+        default="OFX2",
+    )
+    total_tx = 0
+    summary_lines = [f"Output: {output_mode} — {output_format}", ""]
+    for c in selected:
+        n = len(c.statement.get("transactions", []))
+        total_tx += n
+        summary_lines.append(f"  {c.path.stem}.canonical.json  →  {n} transactions")
+    summary_lines.append(f"\nTotal: {total_tx} transactions → {output_dir}")
+    console.print(Panel.fit("\n".join(summary_lines), title="About to convert", style="dim"))
+    output_files: list[str] = []
+    if output_mode == "A":
+        for c in selected:
+            canon_path = recovery_dir / f"recover_{c.path.stem}.canonical.json"
+            statement = json.loads(canon_path.read_text(encoding="utf-8"))
+            validation = validate_statement(statement)
+            statement = validation.statement
+            payload = emit_ofx(statement, output_format)
+            acct = statement.get("account", {})
+            period = statement.get("period", {})
+            ofx_name = normalize_ofx_filename(
+                account_id=acct.get("account_id", "UNKNOWN"),
+                period_end=period.get("end_date", "undated"),
+                source_name=c.path.stem,
+            )
+            out_path = output_dir / ofx_name
+            safe_write_bytes(out_path, payload)
+            output_files.append(str(out_path))
+    else:
+        merged: dict = {}
+        for c in selected:
+            st = json.loads((recovery_dir / f"recover_{c.path.stem}.canonical.json").read_text(encoding="utf-8"))
+            if not merged:
+                merged = dict(st)
+                merged["transactions"] = list(st.get("transactions", []))
+            else:
+                merged.setdefault("transactions", []).extend(st.get("transactions", []))
+        if merged:
+            validation = validate_statement(merged)
+            merged = validation.statement
+            payload = emit_ofx(merged, output_format)
+            acct = merged.get("account", {})
+            ofx_name = normalize_ofx_filename(
+                account_id=acct.get("account_id", "UNKNOWN"),
+                period_end=timestamp_slug(),
+                source_name="concat",
+            )
+            out_path = output_dir / ofx_name
+            safe_write_bytes(out_path, payload)
+            output_files.append(str(out_path))
+    console.print(f"[green]Wrote {len(output_files)} OFX file(s) to output/.[/green]")
+
+    cleanup = _prompt_select(
+        "Delete recovery copies in tmp/recovery/ or keep for analysis?",
+        choices=[("Delete", "delete"), ("Keep", "keep")],
+        default="keep",
+    )
+    if cleanup == "delete":
+        for c in selected:
+            (recovery_dir / f"recover_{c.path.stem}.raw.json").unlink(missing_ok=True)
+            (recovery_dir / f"recover_{c.path.stem}.canonical.json").unlink(missing_ok=True)
+    else:
+        console.print("[dim]Recovery copies kept in tmp/recovery/[/dim]")
 
 
 @app.command()
@@ -547,11 +798,17 @@ def main(
     with Timer() as timer:
         try:
             if not dev_non_interactive:
-                _prompt_select(
+                choice = _prompt_select(
                     "Start pdf2ofx?",
-                    choices=[("Process PDFs", "start")],
+                    choices=[
+                        ("Process PDFs", "start"),
+                        ("Recovery mode", "recovery"),
+                    ],
                     default="start",
                 )
+                if choice == "recovery":
+                    _run_recovery_mode(console, base_dir, dev_non_interactive=dev_non_interactive)
+                    return
 
             paths = ensure_dirs(base_dir)
             api_key, model_id = _preflight(dev_mode)
@@ -907,7 +1164,27 @@ def main(
                         default="delete",
                     )
                     if cleanup == "delete":
-                        safe_delete_dir(tmp_dir)
+                        path_keep_reasons: list[tuple[Path, str | None]] = []
+                        for i, item in enumerate(statements):
+                            path = stem_to_tmp_path.get(item.name)
+                            if path is None:
+                                continue
+                            result = sanity_results[i] if i < len(sanity_results) else None
+                            if result is None:
+                                path_keep_reasons.append((path, "SANITY absent (N_A)"))
+                            elif is_clean_for_tmp_delete(result):
+                                path_keep_reasons.append((path, None))
+                            else:
+                                path_keep_reasons.append((path, tmp_keep_reason(result)))
+                        kept = selective_tmp_cleanup(path_keep_reasons)
+                        if kept:
+                            console.print(
+                                Panel.fit(
+                                    "\n".join(f"Kept: {line}" for line in kept),
+                                    title="tmp/ files kept (not clean)",
+                                    style="dim",
+                                )
+                            )
                     else:
                         console.print("[dim]tmp/ preserved for inspection[/dim]")
             else:

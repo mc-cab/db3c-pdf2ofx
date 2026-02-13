@@ -52,6 +52,60 @@ def list_pdfs(input_dir: Path) -> list[Path]:
     return sorted([p for p in input_dir.iterdir() if p.suffix.lower() == ".pdf"])
 
 
+def list_tmp_jsons(tmp_dir: Path) -> list[Path]:
+    """List recovery candidates: tmp/*.json only.
+
+    Excludes:
+    - Any path under tmp/recovery/ (tmp/recovery/**)
+    - Any file named *.raw.json or *.canonical.json
+
+    Returns sorted list of Paths. Does not create tmp_dir.
+    """
+    if not tmp_dir.exists():
+        return []
+    recovery_dir = tmp_dir / "recovery"
+    candidates: list[Path] = []
+    for p in tmp_dir.iterdir():
+        if not p.is_file() or p.suffix.lower() != ".json":
+            continue
+        if recovery_dir in p.parents or p.parent == recovery_dir:
+            continue
+        if p.name.endswith(".raw.json") or p.name.endswith(".canonical.json"):
+            continue
+        candidates.append(p)
+    return sorted(candidates)
+
+
+def ensure_recovery_dir(tmp_dir: Path) -> Path:
+    """Create tmp/recovery/ if needed; return the path."""
+    recovery_dir = tmp_dir / "recovery"
+    recovery_dir.mkdir(parents=True, exist_ok=True)
+    return recovery_dir
+
+
+def selective_tmp_cleanup(
+    path_keep_reasons: list[tuple[Path, str | None]],
+) -> list[str]:
+    """Delete tmp files that are 'clean'; return list of 'Kept: filename — reason'.
+
+    For each (path, keep_reason): if path.exists(), then if keep_reason is None
+    the file is deleted; else the file is kept and 'path.name — keep_reason'
+    is appended to the returned list.
+    """
+    kept: list[str] = []
+    for path, keep_reason in path_keep_reasons:
+        if not path.exists():
+            continue
+        if keep_reason is None:
+            try:
+                path.unlink()
+            except OSError:
+                kept.append(f"{path.name} — could not delete")
+        else:
+            kept.append(f"{path.name} — {keep_reason}")
+    return kept
+
+
 def tmp_json_path(tmp_dir: Path, source_stem: str) -> Path:
     """Return a short, clickable tmp JSON path (no spaces, fixed length)."""
     slug = hashlib.sha256(source_stem.encode()).hexdigest()[:12]

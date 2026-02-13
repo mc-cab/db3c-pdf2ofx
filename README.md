@@ -3,8 +3,10 @@
 Interactive PDF-to-OFX converter driven by Mindee extraction.
 
 ```
-input/*.pdf ──► Mindee API ──► normalize ──► validate ──► emit OFX ──► output/*.ofx
+input/*.pdf ──► Mindee API ──► normalize ──► validate ──► SANITY ──► emit OFX ──► output/*.ofx
                  (or --dev-canonical JSON)
+
+Recovery mode: tmp/*.json ──► list & select ──► SANITY ──► confirm ──► emit OFX (no Mindee call)
 ```
 
 ---
@@ -44,6 +46,14 @@ uv run pdf2ofx --help
 pip install -e .
 pdf2ofx --help
 ```
+
+### Recovery mode (re-run SANITY on existing tmp JSON)
+
+If you have `tmp/*.json` from a previous run, you can re-run the SANITY review and convert to OFX without calling Mindee again:
+
+1. Run `pdf2ofx` and choose **Recovery mode** at the first menu.
+2. Select one or more JSONs from the list, run SANITY (edit/accept/skip), then confirm and convert.
+3. Raw Mindee responses are kept as `tmp/recovery/recover_<name>.raw.json`; only the canonical statement is updated after edits. See `docs/v0.1.1/` for full spec.
 
 ### Run without Mindee (dev mode)
 
@@ -186,9 +196,10 @@ All options are hidden dev flags (`hidden=True` in Typer).
 
 ### `tmp/` Cleanup
 
-- Auto-deleted when all PDFs succeed
-- Preserved on any failure (prompt in interactive mode)
-- Preserved on user abort (`q`)
+- When you choose "Delete tmp/" after a run, only **clean** tmp files are deleted (reconciliation OK, quality GOOD, not skipped, not forced accept). Questionable files are kept and listed with a reason.
+- Preserved on any failure (prompt in interactive mode).
+- Preserved on user abort (`q`).
+- **Recovery mode** uses `tmp/recovery/` for working copies (`.raw.json` + `.canonical.json`); originals in `tmp/` are never touched by recovery.
 
 ---
 

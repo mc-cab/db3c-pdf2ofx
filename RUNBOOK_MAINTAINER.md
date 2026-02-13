@@ -158,6 +158,34 @@ With `--dev-non-interactive`, the sanity stage auto-accepts without prompting. Q
 - The SANITY stage **never blocks** the pipeline — it can always be skipped.
 - Exceptions in the SANITY stage are caught and converted to `StageError(stage=Stage.SANITY)`, so one PDF's sanity failure does not crash the batch.
 
+---
+
+## Recovery Mode (v0.1.1)
+
+Recovery mode lets the operator re-run SANITY on existing `tmp/*.json` Mindee responses **without calling Mindee again**.
+
+### How it works
+
+1. **Entry:** First menu offers "Process PDFs" and "Recovery mode". Recovery does **local preflight only** (dirs, local_settings, output writable); no Mindee API checks.
+2. **Candidates:** Only top-level `tmp/*.json` are listed. Excluded: any path under `tmp/recovery/`, and any file named `*.raw.json` or `*.canonical.json`.
+3. **Artifacts:** For each selected candidate, two files are written under `tmp/recovery/`: `recover_<name>.raw.json` (raw Mindee; never overwritten) and `recover_<name>.canonical.json` (canonical statement; updated after SANITY).
+4. **Conversion:** OFX is emitted from `.canonical.json` only. See `docs/v0.1.1/SPEC.md` for the exact canonical statement format.
+
+### Tmp retention rules (regular process)
+
+When the operator chooses "Delete tmp/" after a run:
+
+- **Delete** only files whose SANITY result is **clean**: `reconciliation_status == "OK"`, `quality_label == "GOOD"`, `not skipped`, `not forced_accept`.
+- **Keep** all other tmp files and print a panel: "Kept: &lt;filename&gt; — &lt;reason&gt;" (e.g. "reconciliation ERROR", "forced accept on ERROR", "quality DEGRADED", "SANITY absent (N_A)").
+
+So questionable or force-accepted runs are never auto-deleted.
+
+### Troubleshooting recovery
+
+- **No tmp/*.json found:** Put Mindee JSON files in `tmp/` (e.g. from a previous run), or run a normal process first and choose "Keep for inspection" at cleanup.
+- **No valid recovery candidates:** Files that fail to normalize or validate (e.g. no transactions) are skipped from the list; check `tmp/*.json` structure against the Mindee schema.
+- Recovery copies live in `tmp/recovery/`; delete or keep them at the end of the recovery flow. Original `tmp/*.json` are never deleted by recovery.
+
 ### Code layout
 
 | File | Responsibility |

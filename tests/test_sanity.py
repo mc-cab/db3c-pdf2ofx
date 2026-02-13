@@ -11,6 +11,8 @@ from pdf2ofx.sanity.checks import (
     compute_reconciliation,
     compute_sanity,
     extract_balances,
+    is_clean_for_tmp_delete,
+    tmp_keep_reason,
 )
 
 
@@ -412,3 +414,31 @@ class TestComputeSanity:
         assert result.starting_balance == Decimal("100000")
         assert result.ending_balance == Decimal("436000")
         assert result.reconciliation_status == "OK"
+
+
+def test_is_clean_for_tmp_delete_and_keep_reason() -> None:
+    """Selective tmp cleanup: clean only when OK, GOOD, not skipped, not forced_accept."""
+    stmt = _base_statement()
+    r_clean = compute_sanity(stmt, "x.pdf", 2, None, None)
+    r_clean.reconciliation_status = "OK"
+    r_clean.quality_label = "GOOD"
+    r_clean.skipped = False
+    r_clean.forced_accept = False
+    assert is_clean_for_tmp_delete(r_clean) is True
+    assert tmp_keep_reason(r_clean) == ""
+
+    r_forced = compute_sanity(stmt, "x.pdf", 2, None, None)
+    r_forced.forced_accept = True
+    assert is_clean_for_tmp_delete(r_forced) is False
+    assert "forced accept" in tmp_keep_reason(r_forced)
+
+    r_skipped = compute_sanity(stmt, "x.pdf", 2, None, None)
+    r_skipped.skipped = True
+    assert is_clean_for_tmp_delete(r_skipped) is False
+    assert "skipped" in tmp_keep_reason(r_skipped)
+
+    r_na = compute_sanity(stmt, "x.pdf", 2, None, None)
+    r_na.reconciliation_status = "N_A"
+    r_na.quality_label = "N_A"
+    assert is_clean_for_tmp_delete(r_na) is False
+    assert "N_A" in tmp_keep_reason(r_na)
