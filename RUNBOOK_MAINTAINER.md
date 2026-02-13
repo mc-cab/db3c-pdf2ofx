@@ -104,15 +104,113 @@ fitid = sha256(token)[:20]
 
 ---
 
+## Sanity & Reconciliation Layer
+
+The pipeline includes a **SANITY** stage between VALIDATE and EMIT:
+
+```
+PREFLIGHT → MINDEE → NORMALIZE → VALIDATE → SANITY → EMIT → WRITE
+```
+
+### What SANITY does
+
+For each PDF (after validation passes):
+
+1. **Computes statement-level statistics** — extracted/kept/dropped transaction counts, total credits/debits, net movement
+2. **Attempts balance reconciliation** — if starting & ending balances are available (from raw Mindee response or operator entry), computes `reconciled_end = starting_balance + net_movement` and delta against expected ending balance
+3. **Computes quality score** — base 100, with deductions per spec §6
+4. **Displays structured Rich panel** — summary per PDF with colour-coded status
+5. **Prompts operator** — Accept / Edit balances / Skip reconciliation
+
+### Reconciliation thresholds
+
+| Delta (abs) | Status |
+|-------------|--------|
+| ≤ 0.01 | OK |
+| 0.01 – 1.00 | WARNING |
+| > 1.00 | ERROR (requires force-accept) |
+
+### Quality score deductions
+
+| Condition | Points |
+|-----------|--------|
+| Reconciliation ERROR | -60 |
+| Balances missing | -25 |
+| >10% transactions dropped | -15 |
+| Per validation WARNING category | -10 (cap 30) |
+| Low Mindee confidence (if available) | -15 |
+
+Classification: 80–100 = GOOD, 50–79 = DEGRADED, <50 = POOR.
+
+### Non-interactive mode
+
+With `--dev-non-interactive`, the sanity stage auto-accepts without prompting. Quality score is still computed and displayed in the batch summary.
+
+### Balance data sources
+
+1. **Raw Mindee response** — the SANITY layer scans the prediction dict for keys like `Starting Balance`, `starting_balance`, `opening_balance` etc. This works if the Mindee custom model includes balance fields.
+2. **Operator manual entry** — prompted during the "Edit balances" flow.
+3. **Not available** — if neither source provides balances, reconciliation is SKIPPED and quality is downgraded by 25 points.
+
+### Key invariants
+
+- The SANITY stage **never mutates** the validated statement. It is read-only.
+- The SANITY stage **never blocks** the pipeline — it can always be skipped.
+- Exceptions in the SANITY stage are caught and converted to `StageError(stage=Stage.SANITY)`, so one PDF's sanity failure does not crash the batch.
+
+### Code layout
+
+| File | Responsibility |
+|------|----------------|
+| `src/pdf2ofx/sanity/checks.py` | Pure computation: reconciliation math, quality scoring, balance extraction |
+| `src/pdf2ofx/sanity/panel.py` | Rich panel rendering (display only) |
+| `src/pdf2ofx/cli.py` → `_run_sanity_stage()` | Operator confirmation flow, wiring |
+| `tests/test_sanity.py` | 24 unit tests covering reconciliation, quality, extraction, edge cases |
+
+---
+
+## Mindee Data Schema Reference
+
+The full production schema is documented in [`docs/MINDEE_DATA_SCHEMA_REFERENCE.md`](docs/MINDEE_DATA_SCHEMA_REFERENCE.md). That file is the **canonical backup** of the Mindee custom model configuration.
+
+### When to use it
+
+- If the Mindee model or account is lost, deleted, or needs to be recreated from scratch
+- When onboarding a new team member who needs to understand what Mindee extracts
+- When adding or modifying fields in the Mindee UI — check the reference first to understand the current state
+
+### How to recreate the schema
+
+1. Open [`docs/MINDEE_DATA_SCHEMA_REFERENCE.md`](docs/MINDEE_DATA_SCHEMA_REFERENCE.md)
+2. In the Mindee UI, create a new Custom Extraction model
+3. For each field table in the document, create the field with the exact **Field Name** and **Field Type** shown
+4. Copy **Description** and **Guideline** text into the Mindee UI
+5. For the `transactions` field: set type to Nested Object, enable "Multiple items can be extracted", then add each subfield
+6. Enable the **Confidence** option in model settings
+7. Train the model with sample bank statement PDFs
+8. Update `MINDEE_MODEL_ID` in `.env` with the new model ID
+
+### Keeping it current
+
+When you add or change fields in the Mindee UI, update `docs/MINDEE_DATA_SCHEMA_REFERENCE.md` to match. The reference document must always reflect the production model.
+
+---
+
 ## Mindee Schema Constraints
 
 The normalizer (`canonicalize.py`) supports **custom schema A only**.
 
 ### Expected prediction fields
 
-**Statement-level:** `Transactions`, `Bank Name`, `Start Date`, `End Date`
+**V1 (Title Case) statement-level:** `Transactions`, `Bank Name`, `Start Date`, `End Date`
 
-**Transaction-level:** `Operation Date`, `Posting Date`, `Value Date`, `Amount Signed`, `Debit Amount`, `Credit Amount`, `Description`, `Row Confidence Notes`
+**V1 transaction-level:** `Operation Date`, `Posting Date`, `Value Date`, `Amount Signed`, `Debit Amount`, `Credit Amount`, `Description`, `Row Confidence Notes`
+
+**V2 (snake_case) statement-level:** `bank_name`, `bank_id`, `account_id`, `account_type`, `currency`, `start_date`, `end_date`, `starting_balance`, `ending_balance`, `detected_iban`, `detected_aid`, `transactions`
+
+**V2 transaction-level:** `operation_date`, `posting_date`, `value_date`, `amount`, `debit_amount`, `credit_amount`, `description`
+
+For the full field-by-field reference, see [`docs/MINDEE_DATA_SCHEMA_REFERENCE.md`](docs/MINDEE_DATA_SCHEMA_REFERENCE.md).
 
 ### Detection logic
 
@@ -173,6 +271,9 @@ The normalizer (`canonicalize.py`) supports **custom schema A only**.
 | All transactions dropped by validator | Missing dates, amounts, or FITIDs in extraction | Inspect canonical JSON, check Mindee model training data |
 | OFX import shows duplicate transactions | FITID collision (same date + amount + label) | Expected for true duplicates; `seq` counter handles most cases |
 | `pip install -e .` fails | Missing `__init__.py` or broken import paths | Run packaging validation checklist above |
+| `[SANITY] Sanity check failed: ...` | Unexpected data in raw Mindee response | Inspect `tmp/<pdf>.json`; check for malformed prediction structure |
+| Quality score DEGRADED with "balances missing" | Mindee model does not extract balances | Enter balances manually via "Edit balances", or skip to proceed |
+| Reconciliation ERROR with large delta | OCR misread balance or amount values | Verify amounts in panel, edit balances, or force-accept |
 
 ---
 

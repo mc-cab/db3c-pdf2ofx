@@ -134,14 +134,27 @@ def _normalize_schema_a(prediction: dict, account_defaults: dict | None) -> Norm
             }
         )
 
+    # Account fields: Mindee wins if present, else fall back to defaults
+    mindee_account_id = (
+        field("Account Number") or field("Account ID") or field("Account Id")
+    )
+    account_id = mindee_account_id or account_defaults.get("account_id")
+    bank_id = field("Bank ID") or field("Bank Id") or field("Bank Name")
+    raw_account_type = (
+        field("Account Type") or field("Account type")
+        or account_defaults.get("account_type")
+    )
+    account_type = raw_account_type.upper() if isinstance(raw_account_type, str) else raw_account_type
+    currency = field("Currency") or account_defaults.get("currency")
+
     statement = {
         "schema_version": "1.0",
         "source": {"origin": "mindee", "document_id": prediction.get("document_id")},
         "account": {
-            "account_id": account_defaults.get("account_id"),
-            "bank_id": field("Bank Name"),
-            "account_type": None,
-            "currency": None,
+            "account_id": account_id,
+            "bank_id": bank_id,
+            "account_type": account_type,
+            "currency": currency,
         },
         "period": {
             "start_date": _parse_date(field("Start Date")),
@@ -220,14 +233,24 @@ def _normalize_schema_a_v2(prediction: dict, account_defaults: dict | None) -> N
             }
         )
 
+    # Account fields: Mindee wins if present, else fall back to defaults
+    mindee_account_id = (
+        field("account_number") or field("account_id")
+    )
+    account_id = mindee_account_id or account_defaults.get("account_id")
+    bank_id = field("bank_id") or field("bank_name")
+    raw_account_type = field("account_type") or account_defaults.get("account_type")
+    account_type = raw_account_type.upper() if isinstance(raw_account_type, str) else raw_account_type
+    currency = field("currency") or account_defaults.get("currency")
+
     statement = {
         "schema_version": "1.0",
         "source": {"origin": "mindee", "document_id": prediction.get("document_id")},
         "account": {
-            "account_id": account_defaults.get("account_id"),
-            "bank_id": field("bank_name"),
-            "account_type": None,
-            "currency": None,
+            "account_id": account_id,
+            "bank_id": bank_id,
+            "account_type": account_type,
+            "currency": currency,
         },
         "period": {
             "start_date": _parse_date(field("start_date")),

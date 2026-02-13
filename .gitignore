@@ -1,3 +1,25 @@
+# Custom exclusions
+
+*.zip
+
+# Ignore all PDF (bank statement scans, confidential)
+*.pdf
+
+# Ignore all generated OFX files (may contain sensitive transactions)
+*.ofx
+
+# Ignore specific subdirectory for collaboration (may contain sensitive drafts)
+inbox/Collabs/
+
+# Ignore all files in the output folder (generated OFX files)
+output/*
+# Ignore all files in the inbox folder (temporary holding area for confidential customer data)
+inbox/*
+
+# Ignore all files in the tmp folder (temporary holding area for confidential customer data)
+tmp/*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +227,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+

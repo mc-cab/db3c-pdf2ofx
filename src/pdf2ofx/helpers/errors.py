@@ -9,6 +9,7 @@ class Stage(str, Enum):
     MINDEE = "MINDEE"
     NORMALIZE = "NORMALIZE"
     VALIDATE = "VALIDATE"
+    SANITY = "SANITY"
     EMIT = "EMIT"
     WRITE = "WRITE"
 

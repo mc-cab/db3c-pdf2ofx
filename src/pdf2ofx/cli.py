@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Iterable
 
 import typer
 from dotenv import load_dotenv
 from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
 from rich.console import Console
 from rich.panel import Panel
 
@@ -19,21 +23,42 @@ from pdf2ofx.helpers.fs import (
     ensure_dirs,
     list_pdfs,
     load_local_settings,
+    normalize_ofx_filename,
+    open_path_in_default_app,
     safe_delete_dir,
     safe_write_bytes,
     save_local_settings,
     timestamp_slug,
+    tmp_json_path,
+    transaction_line_numbers,
     write_json,
 )
 from pdf2ofx.helpers.reporting import Issue, Severity
 from pdf2ofx.helpers.timing import Timer
 from pdf2ofx.helpers.ui import PdfResult, render_banner, render_summary
 from pdf2ofx.normalizers.canonicalize import NormalizationError, canonicalize_mindee
+from pdf2ofx.sanity.checks import SanityResult, compute_sanity
+from pdf2ofx.sanity.panel import render_sanity_panel
 from pdf2ofx.normalizers.fitid import assign_fitids
 from pdf2ofx.validators.contract_validator import ValidationError, validate_statement
 
 app = typer.Typer(add_completion=False)
 console = Console()
+
+
+def _scan_ofx_fitids(ofx_path: Path) -> dict[str, int]:
+    """Scan an OFX file and return {fitid: line_number}."""
+    fitid_map: dict[str, int] = {}
+    try:
+        with ofx_path.open("r", encoding="utf-8") as f:
+            for line_num, line in enumerate(f, start=1):
+                stripped = line.strip()
+                if stripped.startswith("<FITID>") and stripped.endswith("</FITID>"):
+                    fitid = stripped[7:-8]
+                    fitid_map[fitid] = line_num
+    except Exception:
+        pass
+    return fitid_map
 
 
 class UserAbort(Exception):
@@ -71,6 +96,67 @@ def _prompt_confirm(message: str, default: bool) -> bool:
     default_value = "yes" if default else "no"
     result = _prompt_select(message, choices=choices, default=default_value)
     return result == "yes"
+
+
+# Ignore-pair reasons: only these warning pairs skip the "open source PDF" prompt.
+BOTH_DEBIT_CREDIT = "transaction has both debit and credit amounts"
+SIGNED_VS_DEBIT = "signed amount does not match debit amount"
+SIGNED_VS_CREDIT = "signed amount does not match credit amount"
+_IGNORE_PAIRS = (
+    {BOTH_DEBIT_CREDIT, SIGNED_VS_CREDIT},
+    {BOTH_DEBIT_CREDIT, SIGNED_VS_DEBIT},
+)
+
+
+def _sanity_needs_visual_check(r: SanityResult) -> bool:
+    """True if this sanity result has something that warrants opening the PDF."""
+    if r.reconciliation_status in ("ERROR", "WARNING"):
+        return True
+    if r.deductions or r.warnings:
+        return True
+    return False
+
+
+def _should_suggest_open_file(
+    issues: list[Issue], sanity_results: list[SanityResult]
+) -> bool:
+    if any(_sanity_needs_visual_check(r) for r in sanity_results):
+        return True
+    reasons = {i.reason for i in issues}
+    if reasons in _IGNORE_PAIRS:
+        return False
+    return bool(issues)
+
+
+def _get_sources_to_open(
+    issues: list[Issue],
+    sanity_results: list[SanityResult],
+    statements: list[ProcessItem],
+    sources: list[Path],
+) -> list[Path]:
+    stem_to_source = {s.stem: s for s in sources}
+    to_open: set[Path] = set()
+    for i, r in enumerate(sanity_results):
+        if _sanity_needs_visual_check(r):
+            path = stem_to_source.get(statements[i].name)
+            if path is not None:
+                to_open.add(path)
+    fitid_to_stem: dict[str, str] = {}
+    for item in statements:
+        for tx in item.statement.get("transactions", []):
+            fid = tx.get("fitid")
+            if fid:
+                fitid_to_stem[fid] = item.name
+    for issue in issues:
+        if issue.reason in (BOTH_DEBIT_CREDIT, SIGNED_VS_DEBIT, SIGNED_VS_CREDIT):
+            continue
+        for fid in issue.fitids:
+            stem = fitid_to_stem.get(fid)
+            if stem is not None:
+                path = stem_to_source.get(stem)
+                if path is not None:
+                    to_open.add(path)
+    return list(to_open)
 
 
 def _load_env() -> None:
@@ -204,23 +290,227 @@ def _process_raw_pdf(
     pdf_path: Path,
     api_key: str,
     model_id: str,
-    tmp_dir: Path,
+    tmp_json_path: Path,
     account_defaults: dict,
-) -> tuple[dict, list[str]]:
+) -> tuple[dict, list[str], dict]:
     raw = infer_pdf(api_key, model_id, pdf_path)
-    write_json(tmp_dir / f"{pdf_path.stem}.json", raw)
+    write_json(tmp_json_path, raw)
     normalization = canonicalize_mindee(raw, account_defaults=account_defaults)
-    return normalization.statement, normalization.warnings
+    return normalization.statement, normalization.warnings, raw
 
 
 def _process_dev_canonical(
     canonical_path: Path,
-    tmp_dir: Path,
+    tmp_json_path: Path,
 ) -> dict:
     with canonical_path.open("r", encoding="utf-8") as handle:
         statement = json.load(handle)
-    write_json(tmp_dir / f"{canonical_path.stem}.json", {"dev_mode": True})
+    write_json(tmp_json_path, {"dev_mode": True})
     return statement
+
+
+def _run_sanity_stage(
+    console: Console,
+    statement: dict,
+    pdf_name: str,
+    extracted_count: int,
+    raw_response: dict | None,
+    validation_issues: list,
+    dev_non_interactive: bool,
+    source_path: Path | None = None,
+) -> SanityResult:
+    """Run the SANITY stage: compute, display, confirm.
+
+    Returns the final SanityResult after operator confirmation.
+    Does **not** mutate *statement*.
+    """
+    result = compute_sanity(
+        statement=statement,
+        pdf_name=pdf_name,
+        extracted_count=extracted_count,
+        raw_response=raw_response,
+        validation_issues=validation_issues,
+    )
+    render_sanity_panel(console, result)
+
+    if dev_non_interactive:
+        return result
+
+    while True:
+        choices: list[tuple[str, str]] = [
+            ("Accept", "accept"),
+            ("Edit balances", "edit"),
+            ("Edit transactions", "edit_tx"),
+            ("Skip reconciliation", "skip"),
+        ]
+        if source_path is not None and source_path.exists():
+            choices.append(("Open source PDF", "open"))
+        action = _prompt_select(
+            "Sanity check:",
+            choices=choices,
+            default="accept",
+        )
+
+        if action == "open":
+            open_path_in_default_app(source_path)
+            continue
+
+        if action == "skip":
+            result = compute_sanity(
+                statement=statement,
+                pdf_name=pdf_name,
+                extracted_count=extracted_count,
+                raw_response=None,
+                validation_issues=validation_issues,
+            )
+            result.skipped = True
+            render_sanity_panel(console, result)
+            return result
+
+        if action == "edit":
+            start_str = _prompt_text("Starting balance (or Enter to skip):")
+            end_str = _prompt_text("Ending balance (or Enter to skip):")
+
+            start_bal: Decimal | None = None
+            end_bal: Decimal | None = None
+            if start_str.strip():
+                try:
+                    start_bal = Decimal(start_str.strip().replace(",", ""))
+                except (InvalidOperation, ValueError):
+                    console.print("[yellow]Invalid starting balance — ignored[/yellow]")
+            if end_str.strip():
+                try:
+                    end_bal = Decimal(end_str.strip().replace(",", ""))
+                except (InvalidOperation, ValueError):
+                    console.print("[yellow]Invalid ending balance — ignored[/yellow]")
+
+            result = compute_sanity(
+                statement=statement,
+                pdf_name=pdf_name,
+                extracted_count=extracted_count,
+                raw_response=raw_response,
+                validation_issues=validation_issues,
+                starting_balance=start_bal,
+                ending_balance=end_bal,
+            )
+            render_sanity_panel(console, result)
+            continue
+
+        if action == "edit_tx":
+            transactions = statement.get("transactions", [])
+            if not transactions:
+                continue
+            max_desc = 50
+
+            def _tx_label(i: int, tx: dict) -> str:
+                date_str = (tx.get("posted_at") or "?")[:10]
+                amt = tx.get("amount")
+                amt_str = f"{str(amt):>12}" if amt is not None else " " * 12
+                desc = (tx.get("name") or tx.get("memo") or "-").strip()
+                if len(desc) > max_desc:
+                    desc = desc[: max_desc - 1] + "…"
+                return f"{date_str}  {amt_str}  {desc}"
+
+            edit_tx_action = _prompt_select(
+                "Edit transactions:",
+                choices=[
+                    ("Remove some transactions", "remove"),
+                    ("Edit one transaction (date, amount, description)", "edit_one"),
+                    ("Back", "back"),
+                ],
+                default="back",
+            )
+            if edit_tx_action == "back":
+                continue
+            if edit_tx_action == "remove":
+                checkbox_choices = [
+                    Choice(i, name=_tx_label(i, tx))
+                    for i, tx in enumerate(transactions)
+                ]
+                to_remove = inquirer.checkbox(
+                    message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
+                    choices=checkbox_choices,
+                ).execute()
+                if to_remove is None:
+                    continue
+                if len(to_remove) == 0:
+                    continue
+                if len(to_remove) >= len(transactions):
+                    console.print(
+                        "[yellow]At least one transaction must remain.[/yellow]"
+                    )
+                    continue
+                to_remove_set = set(to_remove)
+                statement["transactions"] = [
+                    t for i, t in enumerate(transactions) if i not in to_remove_set
+                ]
+                result = compute_sanity(
+                    statement=statement,
+                    pdf_name=pdf_name,
+                    extracted_count=extracted_count,
+                    raw_response=raw_response,
+                    validation_issues=validation_issues,
+                )
+                render_sanity_panel(console, result)
+                continue
+            # edit_one
+            select_choices = [
+                Choice(i, name=_tx_label(i, tx))
+                for i, tx in enumerate(transactions)
+            ]
+            try:
+                idx = inquirer.select(
+                    message="Select transaction to edit:",
+                    choices=select_choices,
+                ).execute()
+            except Exception:
+                continue
+            if idx is None:
+                continue
+            tx = statement["transactions"][idx]
+            # Date
+            date_default = (tx.get("posted_at") or "")[:10]
+            date_str = _prompt_text("Date (YYYY-MM-DD):", default=date_default)
+            if date_str.strip():
+                try:
+                    parsed_date = date.fromisoformat(date_str.strip())
+                    tx["posted_at"] = parsed_date.isoformat()
+                except ValueError:
+                    console.print("[yellow]Invalid date — kept previous.[/yellow]")
+            # Amount
+            amt_default = str(tx.get("amount", ""))
+            amt_str = _prompt_text("Amount:", default=amt_default)
+            if amt_str.strip():
+                try:
+                    parsed_amt = Decimal(amt_str.strip().replace(",", ""))
+                    tx["amount"] = parsed_amt
+                    tx["trntype"] = "CREDIT" if parsed_amt >= 0 else "DEBIT"
+                except (InvalidOperation, ValueError):
+                    console.print("[yellow]Invalid amount — kept previous.[/yellow]")
+            # Name
+            name_val = _prompt_text("Name:", default=tx.get("name") or "")
+            tx["name"] = name_val.strip() or tx.get("name")
+            # Memo
+            memo_val = _prompt_text("Memo:", default=tx.get("memo") or "")
+            tx["memo"] = memo_val.strip() or tx.get("memo")
+            result = compute_sanity(
+                statement=statement,
+                pdf_name=pdf_name,
+                extracted_count=extracted_count,
+                raw_response=raw_response,
+                validation_issues=validation_issues,
+            )
+            render_sanity_panel(console, result)
+            continue
+
+        # action == "accept"
+        if result.reconciliation_status == "ERROR":
+            force = _prompt_confirm(
+                "Reconciliation ERROR detected — force accept?", False,
+            )
+            if not force:
+                continue
+        return result
 
 
 @app.command()
@@ -275,6 +565,10 @@ def main(
             issues: list[Issue] = []
             pdf_notes: dict[str, list[str]] = {}
             statements: list[ProcessItem] = []
+            sanity_results: list[SanityResult] = []
+            fitid_lines: dict[str, int] = {}
+            json_transaction_lines: dict[str, list[int]] = {}
+            stem_to_tmp_path: dict[str, Path] = {}
 
             settings_path = base_dir / "local_settings.json"
             settings = load_local_settings(settings_path)
@@ -291,13 +585,21 @@ def main(
 
             for index, source in enumerate(sources):
                 try:
+                    tmp_path = tmp_json_path(tmp_dir, source.stem)
+                    stem_to_tmp_path[source.stem] = tmp_path
+
                     if dev_mode:
-                        statement = _process_dev_canonical(source, tmp_dir)
+                        statement = _process_dev_canonical(source, tmp_path)
                         per_warnings: list[str] = []
+                        raw_response: dict | None = None
                     else:
-                        statement, per_warnings = _process_raw_pdf(
-                            source, api_key, model_id, tmp_dir, settings
+                        statement, per_warnings, raw_response = _process_raw_pdf(
+                            source, api_key, model_id, tmp_path, settings
                         )
+
+                    json_transaction_lines[source.stem] = transaction_line_numbers(
+                        tmp_path
+                    )
 
                     statement, account_issues = _ensure_account_id(
                         statement, settings, allow_prompt=not dev_non_interactive
@@ -311,6 +613,7 @@ def main(
                         pdf_notes.setdefault(source.name, []).append(
                             f"posted_at fallback used for {posted_at_issue.count} txs"
                         )
+                    extracted_count = len(statement.get("transactions", []))
                     validation = validate_statement(statement)
                     statement = validation.statement
                     issues.extend(validation.issues)
@@ -332,6 +635,28 @@ def main(
                             )
                         )
                         continue
+
+                    # ── SANITY stage ──────────────────────────
+                    try:
+                        sanity_result = _run_sanity_stage(
+                            console=console,
+                            statement=statement,
+                            pdf_name=source.name,
+                            extracted_count=extracted_count,
+                            raw_response=raw_response,
+                            validation_issues=validation.issues,
+                            dev_non_interactive=dev_non_interactive,
+                            source_path=source if not dev_mode else None,
+                        )
+                        sanity_results.append(sanity_result)
+                    except UserAbort:
+                        raise
+                    except Exception as exc:
+                        raise StageError(
+                            stage=Stage.SANITY,
+                            message=f"Sanity check failed: {exc}",
+                            hint="Check raw Mindee response in tmp/",
+                        ) from exc
 
                     if dev_simulate_failure and index == 0:
                         raise StageError(
@@ -460,9 +785,17 @@ def main(
                     for item in statements:
                         try:
                             payload = emit_ofx(item.statement, output_format)
-                            out_path = output_dir / f"{item.name}.ofx"
+                            acct = item.statement.get("account", {})
+                            period = item.statement.get("period", {})
+                            ofx_name = normalize_ofx_filename(
+                                account_id=acct.get("account_id", "UNKNOWN"),
+                                period_end=period.get("end_date", "undated"),
+                                source_name=item.name,
+                            )
+                            out_path = output_dir / ofx_name
                             safe_write_bytes(out_path, payload)
                             output_files.append(str(out_path))
+                            fitid_lines.update(_scan_ofx_fitids(out_path))
                         except Exception as exc:
                             issues.append(
                                 Issue(
@@ -528,9 +861,16 @@ def main(
                                 merged["transactions"].append(tx)
                     try:
                         payload = emit_ofx(merged, output_format)
-                        out_path = output_dir / f"concat_{timestamp_slug()}.ofx"
+                        acct = merged.get("account", {})
+                        concat_name = normalize_ofx_filename(
+                            account_id=acct.get("account_id", "UNKNOWN"),
+                            period_end=timestamp_slug(),
+                            source_name="concat",
+                        )
+                        out_path = output_dir / concat_name
                         safe_write_bytes(out_path, payload)
                         output_files.append(str(out_path))
+                        fitid_lines.update(_scan_ofx_fitids(out_path))
                     except Exception as exc:
                         issues.append(
                             Issue(
@@ -555,7 +895,21 @@ def main(
 
             all_ok = all(result.ok for result in results)
             if all_ok:
-                safe_delete_dir(tmp_dir)
+                if dev_non_interactive:
+                    safe_delete_dir(tmp_dir)
+                else:
+                    cleanup = _prompt_select(
+                        "Delete tmp/ (Mindee JSON responses)?",
+                        choices=[
+                            ("Delete (default)", "delete"),
+                            ("Keep for inspection", "keep"),
+                        ],
+                        default="delete",
+                    )
+                    if cleanup == "delete":
+                        safe_delete_dir(tmp_dir)
+                    else:
+                        console.print("[dim]tmp/ preserved for inspection[/dim]")
             else:
                 if not dev_non_interactive:
                     keep = _prompt_select(
@@ -565,6 +919,59 @@ def main(
                     )
                     if keep == "delete":
                         safe_delete_dir(tmp_dir)
+
+            if not dev_mode and sources:
+                run_date = date.today().isoformat()
+                processed_dir = base_dir / "processed" / run_date
+                failed_dir = base_dir / "failed" / run_date
+                moved_ok = 0
+                moved_fail = 0
+                skipped_locked = 0
+                for source_path, result in zip(sources, results):
+                    if not source_path.exists():
+                        continue
+                    try:
+                        if result.ok:
+                            processed_dir.mkdir(parents=True, exist_ok=True)
+                            shutil.move(
+                                str(source_path),
+                                str(processed_dir / source_path.name),
+                            )
+                            moved_ok += 1
+                        else:
+                            failed_dir.mkdir(parents=True, exist_ok=True)
+                            shutil.move(
+                                str(source_path),
+                                str(failed_dir / source_path.name),
+                            )
+                            moved_fail += 1
+                    except PermissionError:
+                        skipped_locked += 1
+                        console.print(
+                            f"[yellow]Could not move {source_path.name} "
+                            "(file in use — close the PDF viewer?).[/yellow]"
+                        )
+                if moved_ok or moved_fail or skipped_locked:
+                    msg = (
+                        f"[dim]Moved {moved_ok} to processed/{run_date}/, "
+                        f"{moved_fail} to failed/{run_date}/[/dim]"
+                    )
+                    if skipped_locked:
+                        msg += f" [yellow]{skipped_locked} could not be moved (file in use).[/yellow]"
+                    console.print(msg)
+
+            fitid_to_json: dict[str, tuple[str, int, int]] = {}
+            for item in statements:
+                lines_list = json_transaction_lines.get(item.name, [])
+                tmp_path = stem_to_tmp_path.get(item.name)
+                for idx, tx in enumerate(item.statement.get("transactions", [])):
+                    fid = tx.get("fitid")
+                    if not fid:
+                        continue
+                    one_based = idx + 1
+                    json_line = lines_list[idx] if idx < len(lines_list) else 0
+                    path_str = str(tmp_path) if tmp_path else ""
+                    fitid_to_json[fid] = (path_str, one_based, json_line)
 
             render_summary(
                 console,
@@ -578,6 +985,9 @@ def main(
                 total_transactions=sum(
                     len(item.statement.get("transactions", [])) for item in statements
                 ),
+                sanity_results=sanity_results,
+                fitid_lines=fitid_lines,
+                fitid_to_json=fitid_to_json,
             )
             if not output_files:
                 console.print(

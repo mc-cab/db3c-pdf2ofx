@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from pathlib import Path
+from typing import TYPE_CHECKING, Iterable
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from pdf2ofx.helpers.reporting import Issue, Severity
+
+if TYPE_CHECKING:
+    from pdf2ofx.sanity.checks import SanityResult
 
 @dataclass
 class PdfResult:
@@ -21,6 +25,41 @@ def render_banner(console: Console) -> None:
     console.print(Panel.fit("pdf2ofx — Mindee → JSON → OFX", style="bold cyan"))
 
 
+_PDF_NAME_MAX = 50
+
+
+def _truncate(text: str, max_len: int = _PDF_NAME_MAX) -> str:
+    """Truncate text with ellipsis if it exceeds *max_len*."""
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 1] + "…"
+
+
+def _format_fitid(
+    fitid: str,
+    fitid_lines: dict[str, int] | None,
+    fitid_to_json: dict[str, tuple[str, int, int]] | None = None,
+) -> str:
+    """Format a FITID with index, OFX line, and JSON path:line for navigation."""
+    parts: list[str] = []
+    json_info = (fitid_to_json or {}).get(fitid)
+    if json_info:
+        path_str, one_based_index, json_line = json_info
+        parts.append(f"#{one_based_index}")
+    parts.append(fitid)
+    if fitid_lines and fitid in fitid_lines:
+        parts.append(f"(OFX L:{fitid_lines[fitid]})")
+    if json_info:
+        _, _, json_line = json_info
+        if json_line > 0:
+            short = Path(path_str)
+            display_path = f"{short.parent.name}/{_truncate(short.name, 45)}"
+            parts.append(f"· {display_path}:{json_line}")
+    if len(parts) == 1:
+        return fitid
+    return " ".join(parts)
+
+
 def render_summary(
     console: Console,
     results: Iterable[PdfResult],
@@ -31,9 +70,12 @@ def render_summary(
     elapsed: float,
     pdf_notes: dict[str, list[str]],
     total_transactions: int,
+    sanity_results: list[SanityResult] | None = None,
+    fitid_lines: dict[str, int] | None = None,
+    fitid_to_json: dict[str, tuple[str, int, int]] | None = None,
 ) -> None:
     table = Table(title="Batch Summary", show_lines=True)
-    table.add_column("PDF")
+    table.add_column("Source PDF")
     table.add_column("Status")
     table.add_column("Stage")
     table.add_column("Hint")
@@ -42,7 +84,7 @@ def render_summary(
     for result in results:
         processed += 1
         status = "OK" if result.ok else "FAIL"
-        table.add_row(result.name, status, result.stage, result.message)
+        table.add_row(_truncate(result.name), status, result.stage, result.message)
 
     console.print(table)
     console.print(
@@ -69,14 +111,28 @@ def render_summary(
     )
     ok_count = max(total_transactions - warning_count - error_count, 0)
 
-    quality = "GOOD"
-    if total_transactions:
-        error_ratio = error_count / total_transactions
-        warning_ratio = warning_count / total_transactions
-        if error_ratio >= 0.2:
-            quality = "POOR"
-        elif warning_ratio >= 0.1:
-            quality = "DEGRADED"
+    # Quality indicator — prefer sanity score, fall back to heuristic
+    if sanity_results:
+        worst = min(sanity_results, key=lambda r: r.quality_score)
+        quality = worst.quality_label
+        quality_detail = f"{quality} ({worst.quality_score}/100)"
+        any_skipped = any(r.skipped for r in sanity_results)
+        if any_skipped:
+            quality_detail += " — SANITY skipped for some PDFs → downgraded"
+        quality_style = {"GOOD": "green", "DEGRADED": "yellow", "POOR": "red"}.get(
+            quality, "dim"
+        )
+    else:
+        quality = "GOOD"
+        if total_transactions:
+            error_ratio = error_count / total_transactions
+            warning_ratio = warning_count / total_transactions
+            if error_ratio >= 0.2:
+                quality = "POOR"
+            elif warning_ratio >= 0.1:
+                quality = "DEGRADED"
+        quality_detail = f"{quality} (SANITY skipped → downgraded)"
+        quality_style = "yellow"
 
     severity_table = Table(title="Validation Summary", show_lines=True)
     severity_table.add_column("Severity")
@@ -92,18 +148,27 @@ def render_summary(
                 continue
             count += issue.count or len(issue.fitids)
             fitids.extend(issue.fitids)
-        fitid_display = ", ".join(fitids[:10]) if fitids else "-"
+        formatted = [
+            _format_fitid(f, fitid_lines, fitid_to_json) for f in fitids[:10]
+        ]
+        fitid_display = "\n".join(formatted) if formatted else "-"
         if len(fitids) > 10:
-            fitid_display = f"{fitid_display}, ... (+{len(fitids) - 10} more)"
+            fitid_display = f"{fitid_display}\n... (+{len(fitids) - 10} more)"
         severity_table.add_row(severity.value, str(count), fitid_display)
 
     console.print(severity_table)
-    console.print(Panel.fit(f"Overall quality: {quality}", title="Quality Indicator"))
+    console.print(
+        Panel.fit(f"Quality: {quality_detail}", title="Quality Indicator", style=quality_style)
+    )
 
     if issues:
         for issue in issues:
             if issue.reason.startswith("FITID collisions detected"):
-                fitid_display = ", ".join(issue.fitids[:10]) if issue.fitids else "-"
+                formatted_col = [
+                    _format_fitid(f, fitid_lines, fitid_to_json)
+                    for f in issue.fitids[:10]
+                ]
+                fitid_display = ", ".join(formatted_col) if formatted_col else "-"
                 if issue.fitids and len(issue.fitids) > 10:
                     fitid_display = (
                         f"{fitid_display}, ... (+{len(issue.fitids) - 10} more)"
@@ -125,9 +190,13 @@ def render_summary(
         issues_table.add_column("Count")
         issues_table.add_column("FITIDs")
         for issue in issues:
-            fitid_display = ", ".join(issue.fitids[:10]) if issue.fitids else "-"
+            formatted_ids = [
+                _format_fitid(f, fitid_lines, fitid_to_json)
+                for f in issue.fitids[:10]
+            ]
+            fitid_display = "\n".join(formatted_ids) if formatted_ids else "-"
             if issue.fitids and len(issue.fitids) > 10:
-                fitid_display = f"{fitid_display}, ... (+{len(issue.fitids) - 10} more)"
+                fitid_display = f"{fitid_display}\n... (+{len(issue.fitids) - 10} more)"
             issues_table.add_row(
                 issue.severity.value,
                 issue.reason,
