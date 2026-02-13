@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -112,10 +113,20 @@ def tmp_json_path(tmp_dir: Path, source_stem: str) -> Path:
     return tmp_dir / f"{slug}.json"
 
 
-def write_json(path: Path, payload: Any) -> None:
+def write_json(path: Path, payload: Any, *, decimal_to_str: bool = False) -> None:
+    """Write payload as JSON. When decimal_to_str=True, Decimal is serialized as string; other non-serializable types raise TypeError."""
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    def default(o: Any) -> Any:
+        if isinstance(o, Decimal):
+            return str(o)
+        raise TypeError(f"Object of type {o.__class__.__name__!r} is not JSON serializable")
+
+    kwargs: dict[str, Any] = {"ensure_ascii": False, "indent": 2}
+    if decimal_to_str:
+        kwargs["default"] = default
     with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2)
+        json.dump(payload, handle, **kwargs)
 
 
 def safe_write_bytes(path: Path, payload: bytes) -> None:

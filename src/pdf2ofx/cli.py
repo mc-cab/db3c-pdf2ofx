@@ -643,7 +643,7 @@ def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bo
             raw_path = recovery_dir / f"recover_{c.path.stem}.raw.json"
             canon_path = recovery_dir / f"recover_{c.path.stem}.canonical.json"
             write_json(raw_path, c.raw)
-            write_json(canon_path, c.statement)
+            write_json(canon_path, c.statement, decimal_to_str=True)
 
         modified: set[str] = set()
         while True:
@@ -664,7 +664,7 @@ def _run_recovery_mode(console: Console, base_dir: Path, dev_non_interactive: bo
                         source_path=None,
                         recovery_mode=True,
                     )
-                    write_json(canon_path, statement)
+                    write_json(canon_path, statement, decimal_to_str=True)
                     modified.add(c.path.stem)
                     c.statement = statement
                     c.sanity_result = sanity_result
