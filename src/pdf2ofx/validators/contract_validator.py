@@ -124,6 +124,15 @@ def validate_statement(statement: dict) -> ValidationResult:
         if not tx.get("trntype"):
             tx["trntype"] = "CREDIT" if tx["amount"] >= 0 else "DEBIT"
 
+        if "page" in tx:
+            if not isinstance(tx["page"], int) or tx["page"] < 1:
+                record_issue(
+                    Severity.WARNING,
+                    "transaction page invalid; key removed",
+                    fitid,
+                )
+                tx.pop("page", None)
+
         valid_transactions.append(tx)
 
     period = statement.get("period") or {}

@@ -52,6 +52,31 @@ def _parse_decimal(value: Any) -> Decimal | None:
         return None
 
 
+def _page_from_v2_item(item: dict) -> int | None:
+    """Collect all candidate page values from item-level and field-level locations; return min (0-based) or None.
+
+    Legacy tmp JSONs and V1 responses have no per-tx locations → no page key; preserve current behavior.
+    """
+    candidates: list[int] = []
+    # Item-level locations
+    for loc in item.get("locations") or []:
+        if isinstance(loc, dict):
+            p = loc.get("page")
+            if isinstance(p, int):
+                candidates.append(p)
+    # Field-level: operation_date, posting_date, value_date, amount, description
+    fields = item.get("fields") or {}
+    for key in ("operation_date", "posting_date", "value_date", "amount", "description"):
+        f = fields.get(key)
+        if isinstance(f, dict):
+            for loc in f.get("locations") or []:
+                if isinstance(loc, dict):
+                    p = loc.get("page")
+                    if isinstance(p, int):
+                        candidates.append(p)
+    return min(candidates) if candidates else None
+
+
 def _extract_prediction(raw: dict) -> dict:
     # V1: document.inference.prediction
     if "document" in raw:
@@ -220,18 +245,20 @@ def _normalize_schema_a_v2(prediction: dict, account_defaults: dict | None) -> N
             memo = f"{notes}"
         name = description or "UNKNOWN"
 
-        transactions.append(
-            {
-                "fitid": "",
-                "posted_at": posted_at,
-                "posted_at_source": posted_at_source,
-                "amount": amount,
-                "debit": debit,
-                "credit": credit,
-                "name": name,
-                "memo": memo,
-            }
-        )
+        tx: dict = {
+            "fitid": "",
+            "posted_at": posted_at,
+            "posted_at_source": posted_at_source,
+            "amount": amount,
+            "debit": debit,
+            "credit": credit,
+            "name": name,
+            "memo": memo,
+        }
+        page_raw = _page_from_v2_item(item)
+        if page_raw is not None:
+            tx["page"] = page_raw + 1  # 1-based canonical
+        transactions.append(tx)
 
     # Account fields: Mindee wins if present, else fall back to defaults
     mindee_account_id = (

@@ -24,6 +24,16 @@ OFXFormat = Literal["OFX2", "OFX1"]
 
 _OFX_NAME_MAX = 32
 _OFX_MEMO_MAX = 254
+_OFX_BANKID_MAX = 9  # OFX BANKID element max length (ofxtools enforces this)
+
+# OFX curdef is OneOf(ISO 4217 codes). Map common Mindee/display values to ISO.
+_CURRENCY_ALIASES: dict[str, str] = {
+    "EURO": "EUR",
+    "DOLLAR": "USD",
+    "DOLLARS": "USD",
+    "POUND": "GBP",
+    "POUNDS": "GBP",
+}
 
 
 def _split_name_memo(
@@ -84,10 +94,20 @@ def _build_ofx(statement: dict) -> OFX:
         dtasof=_to_datetime(period["end_date"]),
     )
 
+    bank_id_raw = account.get("bank_id") or ""
+    bank_id = (
+        bank_id_raw[:_OFX_BANKID_MAX]
+        if len(bank_id_raw) > _OFX_BANKID_MAX
+        else bank_id_raw
+    )
+
+    currency_raw = (account.get("currency") or "").strip().upper()
+    currency = _CURRENCY_ALIASES.get(currency_raw, currency_raw or "XXX")
+
     stmtrs = STMTRS(
-        curdef=account["currency"],
+        curdef=currency,
         bankacctfrom=BANKACCTFROM(
-            bankid=account["bank_id"],
+            bankid=bank_id,
             acctid=account["account_id"],
             accttype=account["account_type"],
         ),

@@ -63,6 +63,8 @@ If you have `tmp/*.json` from a previous run, you can re-run the SANITY review a
 
 **v0.1.5 –** Batch invert sign at L2 (Edit submenu): multi-select transactions to invert, respects triage filter; return to L2 after apply.
 
+**v0.1.6 –** Page-aware SANITY transaction lists (page separators + per-page totals when available).
+
 ### Run without Mindee (dev mode)
 
 ```bash

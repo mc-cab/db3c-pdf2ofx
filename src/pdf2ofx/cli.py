@@ -49,6 +49,10 @@ from pdf2ofx.sanity.checks import (
     is_clean_for_tmp_delete,
     tmp_keep_reason,
 )
+from pdf2ofx.sanity.page_grouping import (
+    build_tx_choices_for_checkbox,
+    build_tx_choices_for_select,
+)
 from pdf2ofx.sanity.panel import render_sanity_panel
 from pdf2ofx.normalizers.fitid import assign_fitids
 from pdf2ofx.validators.contract_validator import ValidationError, validate_statement
@@ -457,10 +461,9 @@ def _run_sanity_stage(
                     if not filtered_indices_batch:
                         console.print("No transactions match current triage filter.")
                         continue
-                    checkbox_choices_batch = [
-                        Choice(i, name=_tx_label(i, transactions_batch[i]))
-                        for i in filtered_indices_batch
-                    ]
+                    checkbox_choices_batch = build_tx_choices_for_checkbox(
+                        transactions_batch, filtered_indices_batch, _tx_label
+                    )
                     try:
                         selected_batch = inquirer.checkbox(
                             message="Select transactions to invert sign (Space to toggle, Enter to confirm):",
@@ -616,10 +619,9 @@ def _run_sanity_stage(
                     if edit_tx_action == "back":
                         break
                     if edit_tx_action == "remove":
-                        checkbox_choices = [
-                            Choice(i, name=_tx_label(i, transactions[i]))
-                            for i in filtered_indices
-                        ]
+                        checkbox_choices = build_tx_choices_for_checkbox(
+                            transactions, filtered_indices, _tx_label
+                        )
                         to_remove = inquirer.checkbox(
                             message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
                             choices=checkbox_choices,
@@ -649,12 +651,13 @@ def _run_sanity_stage(
                     # edit_one — L3
                     _BACK_VALUE = "__back__"
                     while True:  # L3 — Select transaction to edit
-                        select_choices = [
-                            Choice(_BACK_VALUE, name="← Back"),
-                        ] + [
-                            Choice(i, name=_tx_label(i, statement["transactions"][i]))
-                            for i in filtered_indices
-                        ]
+                        select_choices = build_tx_choices_for_select(
+                            statement["transactions"],
+                            filtered_indices,
+                            _tx_label,
+                            _BACK_VALUE,
+                            "← Back",
+                        )
                         try:
                             idx = inquirer.select(
                                 message="Select transaction to edit:",
