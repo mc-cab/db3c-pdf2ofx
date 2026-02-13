@@ -1040,48 +1040,53 @@ def main(
         try:
             if backfill_tmp_meta:
                 _backfill_tmp_meta(console, base_dir)
-            if not dev_non_interactive:
-                choice = _prompt_select(
-                    "Start pdf2ofx?",
-                    choices=[
-                        ("Process PDFs", "start"),
-                        ("Recovery mode", "recovery"),
-                    ],
-                    default="start",
-                )
-                if choice == "recovery":
-                    _run_recovery_mode(console, base_dir, dev_non_interactive=dev_non_interactive)
-                    return
+            while True:
+                if not dev_non_interactive:
+                    choice = _prompt_select(
+                        "Start pdf2ofx?",
+                        choices=[
+                            ("Process PDFs", "start"),
+                            ("Recovery mode", "recovery"),
+                        ],
+                        default="start",
+                    )
+                    if choice == "recovery":
+                        _run_recovery_mode(console, base_dir, dev_non_interactive=dev_non_interactive)
+                        return
 
-            paths = ensure_dirs(base_dir)
-            api_key, model_id = _preflight(dev_mode)
-            input_dir = paths["input"]
-            output_dir = paths["output"]
-            tmp_dir = paths["tmp"]
+                paths = ensure_dirs(base_dir)
+                api_key, model_id = _preflight(dev_mode)
+                input_dir = paths["input"]
+                output_dir = paths["output"]
+                tmp_dir = paths["tmp"]
 
-            results: list[PdfResult] = []
-            result_index: dict[str, int] = {}
-            output_files: list[str] = []
-            issues: list[Issue] = []
-            pdf_notes: dict[str, list[str]] = {}
-            statements: list[ProcessItem] = []
-            sanity_results: list[SanityResult] = []
-            fitid_lines: dict[str, int] = {}
-            json_transaction_lines: dict[str, list[int]] = {}
-            stem_to_tmp_path: dict[str, Path] = {}
+                results: list[PdfResult] = []
+                result_index: dict[str, int] = {}
+                output_files: list[str] = []
+                issues: list[Issue] = []
+                pdf_notes: dict[str, list[str]] = {}
+                statements: list[ProcessItem] = []
+                sanity_results: list[SanityResult] = []
+                fitid_lines: dict[str, int] = {}
+                json_transaction_lines: dict[str, list[int]] = {}
+                stem_to_tmp_path: dict[str, Path] = {}
 
-            settings_path = base_dir / "local_settings.json"
-            settings = load_local_settings(settings_path)
-            settings["settings_path"] = settings_path
+                settings_path = base_dir / "local_settings.json"
+                settings = load_local_settings(settings_path)
+                settings["settings_path"] = settings_path
 
-            if dev_mode:
-                sources = dev_canonical
-            else:
-                sources = list_pdfs(input_dir)
+                if dev_mode:
+                    sources = dev_canonical
+                else:
+                    sources = list_pdfs(input_dir)
 
-            if not sources:
-                console.print("No PDFs found in input/. Exiting.")
-                return
+                if not sources:
+                    if dev_non_interactive:
+                        console.print("No PDFs found in input/. Exiting.")
+                        return
+                    console.print("No PDFs found in input/. Returning to menu.")
+                    continue
+                break
 
             for index, source in enumerate(sources):
                 try:
