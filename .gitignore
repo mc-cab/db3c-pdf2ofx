@@ -1,5 +1,7 @@
 # Custom exclusions
 
+*.zip
+
 # Ignore all PDF (bank statement scans, confidential)
 *.pdf
 
