@@ -401,31 +401,98 @@ def _run_sanity_stage(
             if not transactions:
                 continue
             max_desc = 50
-            checkbox_choices = []
-            for i, tx in enumerate(transactions):
+
+            def _tx_label(i: int, tx: dict) -> str:
                 date_str = (tx.get("posted_at") or "?")[:10]
                 amt = tx.get("amount")
                 amt_str = f"{str(amt):>12}" if amt is not None else " " * 12
                 desc = (tx.get("name") or tx.get("memo") or "-").strip()
                 if len(desc) > max_desc:
                     desc = desc[: max_desc - 1] + "…"
-                label = f"{date_str}  {amt_str}  {desc}"
-                checkbox_choices.append(Choice(i, name=label))
-            to_remove = inquirer.checkbox(
-                message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
-                choices=checkbox_choices,
-            ).execute()
-            if to_remove is None:
+                return f"{date_str}  {amt_str}  {desc}"
+
+            edit_tx_action = _prompt_select(
+                "Edit transactions:",
+                choices=[
+                    ("Remove some transactions", "remove"),
+                    ("Edit one transaction (date, amount, description)", "edit_one"),
+                    ("Back", "back"),
+                ],
+                default="back",
+            )
+            if edit_tx_action == "back":
                 continue
-            if len(to_remove) == 0:
+            if edit_tx_action == "remove":
+                checkbox_choices = [
+                    Choice(i, name=_tx_label(i, tx))
+                    for i, tx in enumerate(transactions)
+                ]
+                to_remove = inquirer.checkbox(
+                    message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
+                    choices=checkbox_choices,
+                ).execute()
+                if to_remove is None:
+                    continue
+                if len(to_remove) == 0:
+                    continue
+                if len(to_remove) >= len(transactions):
+                    console.print(
+                        "[yellow]At least one transaction must remain.[/yellow]"
+                    )
+                    continue
+                to_remove_set = set(to_remove)
+                statement["transactions"] = [
+                    t for i, t in enumerate(transactions) if i not in to_remove_set
+                ]
+                result = compute_sanity(
+                    statement=statement,
+                    pdf_name=pdf_name,
+                    extracted_count=extracted_count,
+                    raw_response=raw_response,
+                    validation_issues=validation_issues,
+                )
+                render_sanity_panel(console, result)
                 continue
-            if len(to_remove) >= len(transactions):
-                console.print("[yellow]At least one transaction must remain.[/yellow]")
-                continue
-            to_remove_set = set(to_remove)
-            statement["transactions"] = [
-                t for i, t in enumerate(transactions) if i not in to_remove_set
+            # edit_one
+            select_choices = [
+                Choice(i, name=_tx_label(i, tx))
+                for i, tx in enumerate(transactions)
             ]
+            try:
+                idx = inquirer.select(
+                    message="Select transaction to edit:",
+                    choices=select_choices,
+                ).execute()
+            except Exception:
+                continue
+            if idx is None:
+                continue
+            tx = statement["transactions"][idx]
+            # Date
+            date_default = (tx.get("posted_at") or "")[:10]
+            date_str = _prompt_text("Date (YYYY-MM-DD):", default=date_default)
+            if date_str.strip():
+                try:
+                    parsed_date = date.fromisoformat(date_str.strip())
+                    tx["posted_at"] = parsed_date.isoformat()
+                except ValueError:
+                    console.print("[yellow]Invalid date — kept previous.[/yellow]")
+            # Amount
+            amt_default = str(tx.get("amount", ""))
+            amt_str = _prompt_text("Amount:", default=amt_default)
+            if amt_str.strip():
+                try:
+                    parsed_amt = Decimal(amt_str.strip().replace(",", ""))
+                    tx["amount"] = parsed_amt
+                    tx["trntype"] = "CREDIT" if parsed_amt >= 0 else "DEBIT"
+                except (InvalidOperation, ValueError):
+                    console.print("[yellow]Invalid amount — kept previous.[/yellow]")
+            # Name
+            name_val = _prompt_text("Name:", default=tx.get("name") or "")
+            tx["name"] = name_val.strip() or tx.get("name")
+            # Memo
+            memo_val = _prompt_text("Memo:", default=tx.get("memo") or "")
+            tx["memo"] = memo_val.strip() or tx.get("memo")
             result = compute_sanity(
                 statement=statement,
                 pdf_name=pdf_name,
@@ -859,22 +926,39 @@ def main(
                 failed_dir = base_dir / "failed" / run_date
                 moved_ok = 0
                 moved_fail = 0
+                skipped_locked = 0
                 for source_path, result in zip(sources, results):
                     if not source_path.exists():
                         continue
-                    if result.ok:
-                        processed_dir.mkdir(parents=True, exist_ok=True)
-                        shutil.move(str(source_path), str(processed_dir / source_path.name))
-                        moved_ok += 1
-                    else:
-                        failed_dir.mkdir(parents=True, exist_ok=True)
-                        shutil.move(str(source_path), str(failed_dir / source_path.name))
-                        moved_fail += 1
-                if moved_ok or moved_fail:
-                    console.print(
+                    try:
+                        if result.ok:
+                            processed_dir.mkdir(parents=True, exist_ok=True)
+                            shutil.move(
+                                str(source_path),
+                                str(processed_dir / source_path.name),
+                            )
+                            moved_ok += 1
+                        else:
+                            failed_dir.mkdir(parents=True, exist_ok=True)
+                            shutil.move(
+                                str(source_path),
+                                str(failed_dir / source_path.name),
+                            )
+                            moved_fail += 1
+                    except PermissionError:
+                        skipped_locked += 1
+                        console.print(
+                            f"[yellow]Could not move {source_path.name} "
+                            "(file in use — close the PDF viewer?).[/yellow]"
+                        )
+                if moved_ok or moved_fail or skipped_locked:
+                    msg = (
                         f"[dim]Moved {moved_ok} to processed/{run_date}/, "
                         f"{moved_fail} to failed/{run_date}/[/dim]"
                     )
+                    if skipped_locked:
+                        msg += f" [yellow]{skipped_locked} could not be moved (file in use).[/yellow]"
+                    console.print(msg)
 
             fitid_to_json: dict[str, tuple[str, int, int]] = {}
             for item in statements:
