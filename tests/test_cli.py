@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from pathlib import Path
 
@@ -50,6 +50,20 @@ def _minimal_statement() -> dict:
         "period": {"start_date": "2024-01-01", "end_date": "2024-01-31"},
         "transactions": [
             {"fitid": "F1", "posted_at": "2024-01-05", "amount": "-10.00", "debit": "10.00", "credit": None, "name": "X", "memo": "", "trntype": "DEBIT"},
+        ],
+    }
+
+
+def _statement_with_three_tx() -> dict:
+    """Statement with 3 transactions (indices 0, 1, 2) for triage tests."""
+    return {
+        "schema_version": "1.0",
+        "account": {"account_id": "ACC-123", "bank_id": "B", "account_type": "CHECKING", "currency": "EUR"},
+        "period": {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        "transactions": [
+            {"fitid": "F1", "posted_at": "2024-01-05", "amount": "-10.00", "debit": "10.00", "credit": None, "name": "Tx0", "memo": "", "trntype": "DEBIT"},
+            {"fitid": "F2", "posted_at": "2024-01-10", "amount": "50.00", "debit": None, "credit": "50.00", "name": "Tx1", "memo": "", "trntype": "CREDIT"},
+            {"fitid": "F3", "posted_at": "2024-01-15", "amount": "-25.00", "debit": "25.00", "credit": None, "name": "Tx2", "memo": "", "trntype": "DEBIT"},
         ],
     }
 
@@ -146,3 +160,154 @@ def test_sanity_stage_edit_tx_back_returns_to_menu(tmp_path: Path) -> None:
             recovery_mode=False,
         )
     assert result is not None
+
+
+def test_sanity_triage_valid_then_edit_shows_only_non_valid(tmp_path: Path) -> None:
+    """Mark some transactions valid via triage; Edit transactions shows only non-valid (v0.1.3)."""
+    from rich.console import Console
+
+    captured_select_choices: list[list] = []
+
+    def mock_select(message=None, choices=None, **kwargs):
+        captured_select_choices.append(choices)
+        result = MagicMock()
+        result.execute.return_value = "__back__"
+        return result
+
+    # Main → triage → Validate → checkbox [0] → confirm → main → edit_tx → edit_one (back)
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "triage", "triage_validate",
+        "edit_tx", "edit_one",
+        "accept",
+    ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0]))), patch(
+        "pdf2ofx.cli._prompt_confirm", return_value=True
+    ), patch("pdf2ofx.cli.inquirer.select", side_effect=mock_select):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    # Edit-one select was called with choices: Back + filtered indices (only 1, 2)
+    assert len(captured_select_choices) >= 1
+    choices = captured_select_choices[-1]
+    values = [getattr(c, "value", c) for c in choices]
+    tx_values = [v for v in values if v != "__back__"]
+    assert set(tx_values) == {1, 2}
+
+
+def test_sanity_triage_flagged_then_edit_shows_only_flagged(tmp_path: Path) -> None:
+    """Mark some transactions flagged via triage; Edit transactions shows only flagged (v0.1.3)."""
+    from rich.console import Console
+
+    captured_select_choices: list[list] = []
+
+    def mock_select(message=None, choices=None, **kwargs):
+        captured_select_choices.append(choices)
+        result = MagicMock()
+        result.execute.return_value = "__back__"
+        return result
+
+    # Main → triage → Flag → checkbox [0, 2] → confirm → main → edit_tx → edit_one (back)
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "triage", "triage_flag",
+        "edit_tx", "edit_one",
+        "accept",
+    ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0, 2]))), patch(
+        "pdf2ofx.cli._prompt_confirm", return_value=True
+    ), patch("pdf2ofx.cli.inquirer.select", side_effect=mock_select):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    choices = captured_select_choices[-1]
+    values = [getattr(c, "value", c) for c in choices]
+    tx_values = [v for v in values if v != "__back__"]
+    assert set(tx_values) == {0, 2}
+
+
+def test_sanity_triage_flag_priority_over_valid(tmp_path: Path) -> None:
+    """When both valid and flagged exist, Edit transactions shows only flagged (v0.1.3)."""
+    from rich.console import Console
+
+    captured_select_choices: list[list] = []
+
+    def mock_select(message=None, choices=None, **kwargs):
+        captured_select_choices.append(choices)
+        result = MagicMock()
+        result.execute.return_value = "__back__"
+        return result
+
+    # Main → triage → Validate [0,1] → triage → Flag [1,2] → main → edit_tx → edit_one (back)
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "triage", "triage_validate",
+        "triage", "triage_flag",
+        "edit_tx", "edit_one",
+        "accept",
+    ]), patch(
+        "pdf2ofx.cli.inquirer.checkbox",
+        side_effect=[
+            MagicMock(execute=MagicMock(return_value=[0, 1])),  # validate
+            MagicMock(execute=MagicMock(return_value=[1, 2])),  # flag
+        ],
+    ), patch("pdf2ofx.cli._prompt_confirm", return_value=True), patch(
+        "pdf2ofx.cli.inquirer.select", side_effect=mock_select
+    ):
+        result = _run_sanity_stage(
+            console=Console(),
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    choices = captured_select_choices[-1]
+    values = [getattr(c, "value", c) for c in choices]
+    tx_values = [v for v in values if v != "__back__"]
+    assert set(tx_values) == {1, 2}
+
+
+def test_sanity_triage_all_valid_then_edit_shows_empty_message(tmp_path: Path) -> None:
+    """When all transactions are validated, Edit transactions shows empty message and returns to menu (v0.1.3)."""
+    mock_console = MagicMock()
+
+    # Main → triage → Validate [0,1,2] → confirm → main → edit_tx (empty filter) → main → accept
+    with patch("pdf2ofx.cli._prompt_select", side_effect=[
+        "triage", "triage_validate",
+        "edit_tx",
+        "accept",
+    ]), patch("pdf2ofx.cli.inquirer.checkbox", return_value=MagicMock(execute=MagicMock(return_value=[0, 1, 2]))), patch(
+        "pdf2ofx.cli._prompt_confirm", return_value=True
+    ):
+        result = _run_sanity_stage(
+            console=mock_console,
+            statement=_statement_with_three_tx(),
+            pdf_name="stmt.pdf",
+            extracted_count=3,
+            raw_response=None,
+            validation_issues=[],
+            dev_non_interactive=False,
+            source_path=None,
+            recovery_mode=False,
+        )
+    assert result is not None
+    messages = [str(c[0][0]) for c in mock_console.print.call_args_list if c[0]]
+    assert any("No transactions match current triage filter" in m for m in messages)

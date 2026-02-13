@@ -57,6 +57,8 @@ If you have `tmp/*.json` from a previous run, you can re-run the SANITY review a
 
 **Provenance (v0.1.2+):** When processing PDFs, the tool writes a sidecar `tmp/<hash>.meta.json` with the source PDF path and name. In Recovery mode, if meta exists, "Open source PDF" is shown and the PDF is resolved from meta path, then `processed/`, then `input/`. Choosing "Edit balances" or "Edit transactions" auto-opens the source PDF when available. Legacy tmp files without meta still recover; they show "(no source PDF)" and omit that option.
 
+**v0.1.3 –** Added transaction triage to speed up manual correction workflow.
+
 ### Run without Mindee (dev mode)
 
 ```bash

@@ -365,11 +365,25 @@ def _run_sanity_stage(
     if dev_non_interactive:
         return result
 
+    max_desc = 50
+
+    def _tx_label(i: int, tx: dict) -> str:
+        date_str = (tx.get("posted_at") or "?")[:10]
+        amt = tx.get("amount")
+        amt_str = f"{str(amt):>12}" if amt is not None else " " * 12
+        desc = (tx.get("name") or tx.get("memo") or "-").strip()
+        if len(desc) > max_desc:
+            desc = desc[: max_desc - 1] + "…"
+        return f"{date_str}  {amt_str}  {desc}"
+
+    triage_state: dict[str, set[int]] = {"valid": set(), "flagged": set()}
+
     while True:
         choices: list[tuple[str, str]] = [
             ("Accept", "accept"),
             ("Edit balances", "edit"),
             ("Edit transactions", "edit_tx"),
+            ("Transaction triage", "triage"),
             ("Skip reconciliation", "skip"),
         ]
         if source_path is not None and source_path.exists():
@@ -387,6 +401,51 @@ def _run_sanity_stage(
 
         if action == "open":
             open_path_in_default_app(source_path)
+            continue
+
+        if action == "triage":
+            transactions_triage = statement.get("transactions", [])
+            if not transactions_triage:
+                continue
+            triage_sub = _prompt_select(
+                "Transaction triage:",
+                choices=[
+                    ("Validate transactions", "triage_validate"),
+                    ("Flag transactions", "triage_flag"),
+                    ("← Back", "back"),
+                ],
+                default="back",
+            )
+            if triage_sub == "back":
+                continue
+            checkbox_choices_triage = [
+                Choice(i, name=_tx_label(i, tx))
+                for i, tx in enumerate(transactions_triage)
+            ]
+            if triage_sub == "triage_validate":
+                msg = "Select transactions to mark as validated (Space to toggle, Enter to confirm):"
+            else:
+                msg = "Select transactions to flag for edit (Space to toggle, Enter to confirm):"
+            try:
+                selected_triage = inquirer.checkbox(
+                    message=msg,
+                    choices=checkbox_choices_triage,
+                ).execute()
+            except Exception:
+                continue
+            if selected_triage is None or len(selected_triage) == 0:
+                continue
+            recap_lines = [_tx_label(i, transactions_triage[i]) for i in selected_triage[:10]]
+            if len(selected_triage) > 10:
+                recap_lines.append(f"(+{len(selected_triage) - 10} more)")
+            for line in recap_lines:
+                console.print(line)
+            if not _prompt_confirm("Confirm selection?", True):
+                continue
+            if triage_sub == "triage_validate":
+                triage_state["valid"] |= set(selected_triage)
+            else:
+                triage_state["flagged"] |= set(selected_triage)
             continue
 
         if action == "skip":
@@ -448,16 +507,18 @@ def _run_sanity_stage(
             transactions = statement.get("transactions", [])
             if not transactions:
                 continue
-            max_desc = 50
-
-            def _tx_label(i: int, tx: dict) -> str:
-                date_str = (tx.get("posted_at") or "?")[:10]
-                amt = tx.get("amount")
-                amt_str = f"{str(amt):>12}" if amt is not None else " " * 12
-                desc = (tx.get("name") or tx.get("memo") or "-").strip()
-                if len(desc) > max_desc:
-                    desc = desc[: max_desc - 1] + "…"
-                return f"{date_str}  {amt_str}  {desc}"
+            if triage_state["flagged"]:
+                filtered_indices = sorted(triage_state["flagged"])
+            elif triage_state["valid"]:
+                filtered_indices = [
+                    i for i in range(len(transactions))
+                    if i not in triage_state["valid"]
+                ]
+            else:
+                filtered_indices = list(range(len(transactions)))
+            if not filtered_indices:
+                console.print("No transactions match current triage filter.")
+                continue
 
             edit_tx_action = _prompt_select(
                 "Edit transactions:",
@@ -472,8 +533,8 @@ def _run_sanity_stage(
                 continue
             if edit_tx_action == "remove":
                 checkbox_choices = [
-                    Choice(i, name=_tx_label(i, tx))
-                    for i, tx in enumerate(transactions)
+                    Choice(i, name=_tx_label(i, transactions[i]))
+                    for i in filtered_indices
                 ]
                 to_remove = inquirer.checkbox(
                     message="Select transactions to REMOVE (Space to toggle, Enter to confirm):",
@@ -506,8 +567,8 @@ def _run_sanity_stage(
             select_choices = [
                 Choice(_BACK_VALUE, name="← Back"),
             ] + [
-                Choice(i, name=_tx_label(i, tx))
-                for i, tx in enumerate(transactions)
+                Choice(i, name=_tx_label(i, transactions[i]))
+                for i in filtered_indices
             ]
             try:
                 idx = inquirer.select(
